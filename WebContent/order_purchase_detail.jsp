@@ -59,6 +59,7 @@
 
 <table class="dataTable">
 <thead>
+<tr>
 <th><b>Amount</b></th>
 <th><b>Order No.</b></th>
 <th><b>Title</b></th>
