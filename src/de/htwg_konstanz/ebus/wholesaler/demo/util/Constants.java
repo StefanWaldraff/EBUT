@@ -22,6 +22,7 @@ public class Constants
 	
 	public static final String ACTION_LOGIN = "login";
 	public static final String ACTION_LOGOUT = "logout";
+	public static final String ACTION_IMPORT = "importAction";
 
 	public static final String ACTION_READ_WS_SETTINGS = "readWsSettings";
 	public static final String ACTION_UPDATE_WS_SETTINGS = "updateWsSettings";
