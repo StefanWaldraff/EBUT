@@ -101,6 +101,6 @@ public class ExportAction implements IAction{
    */
 	public boolean accepts(String actionName)
 	{
-		return actionName.equalsIgnoreCase(Constants.ACTION_IMPORT);
+		return actionName.equalsIgnoreCase(Constants.ACTION_EXPORT);
 	}
 }
