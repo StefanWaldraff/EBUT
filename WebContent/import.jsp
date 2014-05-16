@@ -18,7 +18,7 @@
 <h1>Import</h1>
 <div>
 
-<form method="POST" enctype="multipart/form-data" action="fup.cgi">
+<form method="POST" enctype="multipart/form-data" action="controllerservlet?action=importAction">
   File to upload: <input type="file" name="upfile"><br/>
  
   <br/>

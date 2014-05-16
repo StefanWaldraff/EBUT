@@ -20,11 +20,27 @@
 ************************************************************************************/
 package de.htwg_konstanz.ebus.wholesaler.action;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.jsp.PageContext;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.ParseException;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.security.Security;
@@ -38,7 +54,7 @@ import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
 *
 * @author tdi
 */
-public class ImportAction implements IAction{
+public class ImportAction implements IAction  {
 	
 	public static final String ACTION_SHOW_PRODUCT_LIST = "showProductList";
 	public static final String PARAM_LOGIN_BEAN = "loginBean";
@@ -59,9 +75,64 @@ public class ImportAction implements IAction{
    */
 	public String execute(HttpServletRequest request, HttpServletResponse response, ArrayList<String> errorList)
 	{
+		
+		// Check that we have a file upload request
+		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+		// configures upload settings
+        DiskFileItemFactory factory = new DiskFileItemFactory();
+
+		// Configure a repository (to ensure a secure temp location is used)
+		//TODO
+		ServletContext servletContext = request.getSession().getServletContext();
+		File repository = (File) servletContext.getAttribute("javax.servlet.context.tempdir");
+		factory.setRepository(repository);
+
+		// Create a new file upload handler
+		ServletFileUpload upload = new ServletFileUpload(factory);
+
+		// Parse the request
+		
+			 
+			try {
+				List<FileItem> items = upload.parseRequest(request);
+				 if (items != null && items.size() > 0) {
+		                // iterates over form's fields
+					 for (FileItem item : items) {
+		                    // processes only fields that are not form fields
+		                    if (!item.isFormField()) {
+		                        String fileName = new File(item.getName()).getName();
+		                        String filePath = upload + File.separator + fileName;
+		                        File storeFile = new File(filePath);
+		 
+		                        // saves the file on disk
+		                        item.write(storeFile);
+		                        FileInputStream str= new FileInputStream("storefile");
+		            			new ImportDOM(storeFile);
+		                    }
+					 }
+				 }
+			} catch (FileUploadException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				System.out.println("Error in Fileupload");
+			}
+			catch(ParseException ex){
+				ex.printStackTrace();
+			}
+			catch(Exception exc){
+				
+				exc.printStackTrace();
+			}
+			
+	
+		
+		//Klasse erstellen new ImportDOM(xmlFileStream)
+		
+		
+		
 		// get the login bean from the session
 		LoginBean loginBean = (LoginBean)request.getSession(true).getAttribute(PARAM_LOGIN_BEAN);
-
+		
 		// ensure that the user is logged in
 		if (loginBean != null && loginBean.isLoggedIn())
 		{
@@ -74,7 +145,7 @@ public class ImportAction implements IAction{
 				List<?> productList = ProductBOA.getInstance().findAll();
 				request.getSession(true).setAttribute(PARAM_PRODUCT_LIST, productList);					
 			
-				// redirect to the product page
+				// redirect to the import page
 				return "import.jsp";
 			}
 			else
