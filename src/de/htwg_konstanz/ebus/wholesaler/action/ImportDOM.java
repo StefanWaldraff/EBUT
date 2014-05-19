@@ -2,6 +2,7 @@ package de.htwg_konstanz.ebus.wholesaler.action;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,15 +16,17 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 
 public class ImportDOM {
 	
-
+	org.w3c.dom.Document dom;
 	
-	public ImportDOM(File xml){
+	public ImportDOM(InputStream xml){
 		//Parsen eines XML-Dokuments unter Java
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db;
 		try {
 			db = dbf.newDocumentBuilder();
 			org.w3c.dom.Document document = db.parse(xml);
+			this.dom=document;
+	
 		} catch (ParserConfigurationException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -42,7 +45,12 @@ public class ImportDOM {
 	//DOM Element Childs ... 
 	//Datenbank verknüpfung
 	
+	public void writeToDatabase(){
+		
 	
+		
+		
+	}
 	
 	
 	public static void doSomething(Node node) {
