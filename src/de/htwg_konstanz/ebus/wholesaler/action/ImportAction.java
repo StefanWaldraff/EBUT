@@ -82,21 +82,8 @@ public class ImportAction implements IAction  {
 		
 		// Check that we have a file upload request
 		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
-		/*// checks if the request actually contains upload file
-		if (!ServletFileUpload.isMultipartContent(request)) {
-            // if not, we stop here
-            PrintWriter writer;
-			try {
-				writer = response.getWriter();
-				writer.println("Error: Form must has enctype=multipart/form-data.");
-		        writer.flush();
-		        return "error";
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-           
-        }*/
+		if(isMultipart)
+		{
 		
 		if (!ServletFileUpload.isMultipartContent(request)) {
 			
@@ -152,6 +139,12 @@ public class ImportAction implements IAction  {
 		                    
 					 }
 				 }
+				 else{
+					 PrintWriter writer =response.getWriter();
+					 writer.write("Keine Datei gewählt!");
+					 writer.flush();
+					 writer.close();
+				 }
 				 
 				 
 				 
@@ -165,7 +158,7 @@ public class ImportAction implements IAction  {
 			}
 			
 			
-		
+		}
 			
 			 
 	    	
