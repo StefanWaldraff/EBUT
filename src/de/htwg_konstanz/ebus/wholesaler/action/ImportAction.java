@@ -85,12 +85,6 @@ public class ImportAction implements IAction  {
 		if(isMultipart)
 		{
 		
-		if (!ServletFileUpload.isMultipartContent(request)) {
-			
-			
-			System.out.println("LEER");
-			
-		}
 		
 		
 		
