@@ -3,8 +3,6 @@ package de.htwg_konstanz.ebus.wholesaler.helper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import java.lang.Object;
 import java.util.List;
 
 import javax.xml.XMLConstants;
@@ -16,15 +14,11 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
-import de.htwg_konstanz.ebus.framework.wholesaler.vo.Supplier;
-import de.htwg_konstanz.ebus.framework.wholesaler.vo.util.Constants;
 
 public class ImportDOM {
 
@@ -79,9 +73,8 @@ public class ImportDOM {
 				.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		Schema schema;
 		try {
-			schema = factory
-					.newSchema(new File(
-							"C:\\Users\\Natalie\\Desktop\\Ebut\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
+			schema = factory.newSchema(new File(
+					"C:\\Test\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
 
 			// Create a Validator object, which can be used to validate
 			// an instance document.
