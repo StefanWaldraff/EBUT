@@ -74,7 +74,7 @@ public class ImportDOM {
 		Schema schema;
 		try {
 			schema = factory.newSchema(new File(
-					"C:\\Test\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
+					"C:\\Temp\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
 
 			// Create a Validator object, which can be used to validate
 			// an instance document.
