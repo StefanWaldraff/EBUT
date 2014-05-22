@@ -63,7 +63,6 @@ public class ClassFinderUtil {
 		try {
 			directory = new File(url.toURI().getPath());
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		if (directory.exists()) {
