@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.lang.Object;
+import java.util.List;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -20,82 +21,124 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
+import de.htwg_konstanz.ebus.framework.wholesaler.vo.Supplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.vo.util.Constants;
 
 public class ImportDOM {
-	
+
 	org.w3c.dom.Document dom;
-	
-	public ImportDOM(InputStream xml){
+
+	public ImportDOM(InputStream xml) {
 		try {
-		//Parsing of a XML-Document through Java
-		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		// configure Parsing Process with Factory 
-		dbf.setValidating(true);
-		dbf.setExpandEntityReferences(true);
-		//ignore Whitespaces
-		dbf.setIgnoringElementContentWhitespace(true);
-		dbf.setNamespaceAware(false);
-		//dbf.setSchema(null);
-		dbf.setIgnoringComments(true);
-		//dbf.setXIncludeAware(false);
-		
-		// Create a SchemaFactory capable of understanding W3C schemas
-		SchemaFactory factory = SchemaFactory.
-		newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-		Schema schema = factory.newSchema(new File("mySchema.xsd"));
-		// Create a Validator object, which can be used to validate
-		// an instance document.
-		Validator validator = schema.newValidator();
-		
-		
-		DocumentBuilder db = dbf.newDocumentBuilder();
-		//db.isIgnoringElementContentWhitespace();
-		//TODO !!!!!db.setErrorHandler(org.xml.sax.helpers.DefaultHandler);
-		db.setEntityResolver(null);
-		org.w3c.dom.Document document = db.parse(xml);
-		// Validate the DOM tree
-		validator.validate(new DOMSource(document));
-			this.dom=document;
-	
+			// Parsing of a XML-Document through Java
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			// configure Parsing Process with Factory
+			dbf.setValidating(true);
+			dbf.setExpandEntityReferences(true);
+			// ignore Whitespaces
+			dbf.setIgnoringElementContentWhitespace(true);
+			dbf.setNamespaceAware(false);
+			dbf.setIgnoringComments(true);
+
+			DocumentBuilder db = dbf.newDocumentBuilder();
+			dbf.setIgnoringElementContentWhitespace(true);
+
+			org.w3c.dom.Document document = db.parse(xml);
+
+			if (this.validate(document)) {
+				getSupplier(document);
+				writeToDatabase(getSupplier(document));
+			}
+
+			this.dom = document;
+
 		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		catch (SAXException e) {
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		}
-	
-	
-	//Validieren wsdl validiert
-	//DOM Element Childs ... 
-	//Datenbank verknüpfung
-	
-	public void writeToDatabase(){
-		
-	
-		
-		
 	}
-	
-	
-	public static void doSomething(Node node) {
-	    // do something with the current node instead of System.out
-	    System.out.println(node.getNodeName());
 
-	    NodeList nodeList = node.getChildNodes();
-	    for (int i = 0; i < nodeList.getLength(); i++) {
-	        Node currentNode = nodeList.item(i);
-	        if (currentNode.getNodeType() == Node.ELEMENT_NODE) {
-	            //calls this method for all the children which is Element
-	            doSomething(currentNode);
-	        }
-	    }
-	
-	
-	
-	
+	// Validieren wsdl validiert
+	// DOM Element Childs ...
+	// Datenbank verknüpfung
+
+	public boolean validate(org.w3c.dom.Document document) {
+
+		// Create a SchemaFactory capable of understanding W3C schemas
+
+		System.out.println("TEST");
+		SchemaFactory factory = SchemaFactory
+				.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		Schema schema;
+		try {
+			schema = factory
+					.newSchema(new File(
+							"C:\\Users\\Natalie\\Desktop\\Ebut\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
+
+			// Create a Validator object, which can be used to validate
+			// an instance document.
+			Validator validator = schema.newValidator();
+			// Validate the DOM tree
+			validator.validate(new DOMSource(document));
+			System.out.println("TRUE!");
+			return true;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} catch (SAXException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+
 	}
-	
+
+	// checken ob optional oder nicht bei xml
+	public BOSupplier getSupplier(org.w3c.dom.Document document) {
+
+		// test if Supplier is in Database
+		NodeList supplier = document.getElementsByTagName("SUPPLIER_NAME");
+		System.out.println(supplier.item(0).hasChildNodes());
+		String companyname = null;
+		BOSupplier endsupplier = null;
+
+		if (supplier.getLength() >= 1) {
+
+			companyname = supplier.item(0).getFirstChild().getNodeValue();
+			// TODO writeToDatabase(new
+			// BOSupplier().setCompanyname(companyname));
+
+		}
+
+		List<BOSupplier> suppliers = SupplierBOA.getInstance().findAll();
+		for (BOSupplier supp : suppliers) {
+
+			if (endsupplier.getCompanyname().equals(suppliers)) {
+
+				endsupplier = supp;
+			}
+		}
+		return endsupplier;
+	}
+
+	public void writeToDatabase(BOSupplier sup) {
+
+		SupplierBOA supboa = null;
+		supboa.saveOrUpdate(sup);
+
+	}
+
+	public void uploadFile() {
+
+	}
+
 }
