@@ -18,6 +18,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
@@ -92,11 +93,11 @@ public class ImportDOM {
 			System.out.println("TRUE!");
 			return true;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("IOException in validate");
 			e.printStackTrace();
 			return false;
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
+			System.out.println("SAXException in validate");
 			e.printStackTrace();
 			return false;
 		}
@@ -138,6 +139,7 @@ public class ImportDOM {
 
 	public void writeArticleDetailsToDatabase(org.w3c.dom.Document document) {
 		ProductBOA pboa = ProductBOA.getInstance();
+		BOProduct product = new BOProduct();
 
 		NodeList articles = document.getElementsByTagName("ARTICLE");
 
@@ -147,12 +149,38 @@ public class ImportDOM {
 			for (int j = 0; j < children.getLength(); j++) {
 				Node node = children.item(j);
 				if (node.getNodeName().equals("SUPPLIER_AID")) {
-
+					String sAID = node.getFirstChild().getNodeValue();
+					product.getSupplier().getSupplierNumber().equals(sAID);
+					// TODO Write Supplier AID to Database
 				}
 				if (node.getNodeName().equals("ARTICLE_DETAILS")) {
+					String ean = node.getFirstChild().getNodeValue();
+					// String descrshort=node.;
+					String descrlong = node.getLastChild().getNodeValue();
+
+					product.setLongDescription(descrlong);
+					// product.setShortDescription(shortDescription)
+				}
+				if (node.getNodeName().equals("ARTICLE_ORDER_DETAILS")) {
+					String orderunit = node.getFirstChild().getNodeValue();
+					// ORDER_UNIT --> BOOderItemPurchase.setOrderUnit
+					// CONTENT_UNIT -->
+					// BOOderItemPurchase.setProductDescription??
+					// NO_CU_PER_OU --> BOOderItemPurchase.setUnitPrice
 
 				}
+				if (node.getNodeName().equals("ARTICLE_PRICE_DETAILS")) {
+
+					/*
+					 * <ARTICLE_PRICE price_type="net_list"> DOM Attribut
+					 * setpricetype ODER Entscheidung Purchase oder Sale Price??
+					 * <PRICE_AMOUNT> setAmount <PRICE_CURRENCY> setpricetype??
+					 * <TAX> setTaxrate <TERRITORY> setCountry
+					 */
+				}
+
 			}
+			pboa.saveOrUpdate(product);
 		}
 	}
 
