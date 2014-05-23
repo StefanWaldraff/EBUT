@@ -26,6 +26,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.security.Security;
 import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
@@ -41,10 +42,6 @@ import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
  * @author tdi
  */
 public class ExportAction implements IAction {
-
-	public static final String ACTION_SHOW_PRODUCT_LIST = "showProductList";
-	public static final String PARAM_LOGIN_BEAN = "loginBean";
-	private static final String PARAM_PRODUCT_LIST = "productList";
 
 	public ExportAction() {
 		super();
@@ -67,7 +64,7 @@ public class ExportAction implements IAction {
 			HttpServletResponse response, ArrayList<String> errorList) {
 		// get the login bean from the session
 		LoginBean loginBean = (LoginBean) request.getSession(true)
-				.getAttribute(PARAM_LOGIN_BEAN);
+				.getAttribute(Constants.PARAM_LOGIN_BEAN);
 
 		// ensure that the user is logged in
 		if (loginBean != null && loginBean.isLoggedIn()) {
@@ -78,20 +75,12 @@ public class ExportAction implements IAction {
 			// resources.
 			if (Security.getInstance().isUserAllowed(loginBean.getUser(),
 					Security.RESOURCE_ALL, Security.ACTION_READ)) {
-				// find all available products and put it to the session
-				List<?> productList = ProductBOA.getInstance().findAll();
-				request.getSession(true).setAttribute(PARAM_PRODUCT_LIST,
-						productList);
-
-				// redirect to the product page
-				return "export.jsp";
+				doExport(request, errorList);
 			} else {
 				// authorization failed -> show error message
 				errorList.add("You are not allowed to perform this action!");
-
-				// redirect to the welcome page
-				return "welcome.jsp";
 			}
+			return errorList.isEmpty() ? "export.jsp" : "welcome.jsp";
 		} else
 			// redirect to the login page
 			return "login.jsp";
@@ -110,5 +99,39 @@ public class ExportAction implements IAction {
 	public boolean accepts(String actionName) {
 		return actionName.equalsIgnoreCase(Constants.ACTION_EXPORT_XML)
 				|| actionName.equalsIgnoreCase(Constants.ACTION_EXPORT_XHTML);
+	}
+
+	private void doExport(HttpServletRequest request,
+			ArrayList<String> errorList) {
+		if (request.getParameter("type") != null)
+			// only called by page loading -> no action
+			return;
+
+		String action = request.getParameter("action");
+		String match = request.getParameter("match");
+
+		List<BOProduct> productList = filterProductList(request, match);
+		if (productList.isEmpty())
+			// no products remaining after filtering -> error
+			errorList.add("No matching products found for pattern: " + match);
+	}
+
+	private List<BOProduct> filterProductList(HttpServletRequest request,
+			String toMatch) {
+		List<BOProduct> productList = ProductBOA.getInstance().findAll();
+		if (toMatch == null || toMatch.equals(""))
+			// match is empty, nothing to filter
+			return productList;
+
+		// convert to lower case
+		toMatch = toMatch.toLowerCase();
+		List<BOProduct> filteredList = new ArrayList<BOProduct>();
+		for (BOProduct p : productList) {
+			String shortDescription = p.getShortDescription();
+			if (shortDescription != null
+					&& shortDescription.toLowerCase().contains(toMatch))
+				filteredList.add(p);
+		}
+		return filteredList;
 	}
 }

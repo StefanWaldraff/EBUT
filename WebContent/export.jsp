@@ -17,24 +17,23 @@
 
 	<h1>XML Export</h1>
 	<div>
-		<form method="POST" enctype="multipart/form-data"
-			action="controllerservlet?action=exportXmlAction">
-			Please select:<br/>
-			<input type="radio" name="select" value="all" checked/> All articles<br/>
-			<input type="radio" name="select" value="selection" /> Articles matching: <input type="text" name="match"/><br/>
-			<br/>
+		<form method="POST" action="controllerservlet?action=exportXmlAction">
+			Please select:<br /> <input type="hidden" name="type" value="export" />
+			<input type="radio" name="select" value="all" checked /> All
+			articles<br /> <input type="radio" name="select" value="selection" />
+			Articles matching: <input type="text" name="match" /><br /> <br />
 			<input type="submit" value="Press"> to export as XML!
 		</form>
 	</div>
-	
+
 	<h1>XHTML Export</h1>
 	<div>
-		<form method="POST" enctype="multipart/form-data"
+		<form method="POST"
 			action="controllerservlet?action=exportXhtmlAction">
-			Please select:<br/>
-			<input type="radio" name="select" value="all" checked/> All articles<br/>
-			<input type="radio" name="select" value="selection" /> Articles matching: <input type="text" name="match"/><br/>
-			<br/>
+			Please select:<br /> <input type="hidden" name="type" value="export" />
+			<input type="radio" name="select" value="all" checked /> All
+			articles<br /> <input type="radio" name="select" value="selection" />
+			Articles matching: <input type="text" name="match" /><br /> <br />
 			<input type="submit" value="Press"> to export as XHTML!
 		</form>
 	</div>
