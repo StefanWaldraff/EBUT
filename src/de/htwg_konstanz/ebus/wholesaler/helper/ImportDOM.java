@@ -14,6 +14,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -47,12 +48,13 @@ public class ImportDOM {
 			if (this.validate(document)) {
 				if (getSupplier(document) != null) {
 					writeSupplierNameToDatabase(getSupplier(document));
+					writeArticleDetailsToDatabase(document);
 
 				} else {
 					System.out.println("Supplier not found in Database");
 				}
 			} else {
-				System.out.println("Document not valide");
+				System.out.println("Document not valid");
 			}
 
 			this.dom = document;
@@ -69,10 +71,6 @@ public class ImportDOM {
 		}
 	}
 
-	// Validieren wsdl validiert
-	// DOM Element Childs ...
-	// Datenbank verknüpfung
-
 	public boolean validate(org.w3c.dom.Document document) {
 
 		// Create a SchemaFactory capable of understanding W3C schemas
@@ -83,7 +81,7 @@ public class ImportDOM {
 		Schema schema;
 		try {
 			schema = factory.newSchema(new File(
-					"C:\\Temp\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
+					"C:\\TEMP\\bmecat_new_catalog_1_2_simple_without_NS.xsd"));
 
 			// Create a Validator object, which can be used to validate
 			// an instance document.
@@ -111,7 +109,7 @@ public class ImportDOM {
 		NodeList supplier = document.getElementsByTagName("SUPPLIER_NAME");
 		System.out.println(supplier.item(0).hasChildNodes());
 		String companyname;
-		BOSupplier endsupplier = null;
+		BOSupplier endsupplier = new BOSupplier();
 
 		if (supplier.getLength() >= 1) {
 
@@ -125,9 +123,11 @@ public class ImportDOM {
 			if (endsupplier.getCompanyname().equals(suppliers)) {
 
 				endsupplier = supp;
+				System.out.println("supplier" + endsupplier);
 			}
 		}
 		return endsupplier;
+
 	}
 
 	public void writeSupplierNameToDatabase(BOSupplier sup) {
@@ -150,19 +150,23 @@ public class ImportDOM {
 				Node node = children.item(j);
 				if (node.getNodeName().equals("SUPPLIER_AID")) {
 					String sAID = node.getFirstChild().getNodeValue();
-					product.getSupplier().getSupplierNumber().equals(sAID);
+					System.out.println("foundSAID:"
+							+ product.getSupplier().getSupplierNumber()
+									.equals(sAID));
 					// TODO Write Supplier AID to Database
 				}
 				if (node.getNodeName().equals("ARTICLE_DETAILS")) {
 					String ean = node.getFirstChild().getNodeValue();
 					// String descrshort=node.;
 					String descrlong = node.getLastChild().getNodeValue();
-
-					product.setLongDescription(descrlong);
+					System.out.println(ean);
+					System.out.println(descrlong);
+					// product.setLongDescription(descrlong);
 					// product.setShortDescription(shortDescription)
 				}
 				if (node.getNodeName().equals("ARTICLE_ORDER_DETAILS")) {
 					String orderunit = node.getFirstChild().getNodeValue();
+					System.out.println("orderunit");
 					// ORDER_UNIT --> BOOderItemPurchase.setOrderUnit
 					// CONTENT_UNIT -->
 					// BOOderItemPurchase.setProductDescription??
@@ -171,11 +175,15 @@ public class ImportDOM {
 				}
 				if (node.getNodeName().equals("ARTICLE_PRICE_DETAILS")) {
 
+					NamedNodeMap attrpricelists = node.getFirstChild()
+							.getAttributes();
+					// String attrpricelist=
+					// attrpricelist.getNamedItem("price_type");
 					/*
 					 * <ARTICLE_PRICE price_type="net_list"> DOM Attribut
-					 * setpricetype ODER Entscheidung Purchase oder Sale Price??
-					 * <PRICE_AMOUNT> setAmount <PRICE_CURRENCY> setpricetype??
-					 * <TAX> setTaxrate <TERRITORY> setCountry
+					 * Entscheidung Purchase oder Sale Price?? <PRICE_AMOUNT>
+					 * setAmount <PRICE_CURRENCY> setpricetype?? <TAX>
+					 * setTaxrate <TERRITORY> setCountry
 					 */
 				}
 

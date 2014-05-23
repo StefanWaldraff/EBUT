@@ -103,7 +103,6 @@ public class ImportAction implements IAction {
 						// Creates ImportDOM and with the xml Stream as a
 						// parameter
 						new ImportDOM(iSt);
-						System.out.println("I'm here");
 
 					}
 				} else {

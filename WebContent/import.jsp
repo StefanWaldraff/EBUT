@@ -7,6 +7,17 @@
 <meta http-equiv="cache-control" content="no-cache">
 <meta http-equiv="pragma" content="no-cache">
 <link rel="stylesheet" type="text/css" href="default.css">
+<script type="text/javascript">
+	function testEmpty(){
+		if(document.uploadform.upfile.value == ""){
+			alert("Please choose a document!");
+			return false;
+		}
+		return true;
+		
+		
+	}
+</script>
 </head>
 <body>
 
@@ -18,10 +29,10 @@
 	<h1>Import</h1>
 	<div>
 
-		<form method="POST" enctype="multipart/form-data"
-			action="controllerservlet?action=importAction">
+		<form name="uploadform" method="POST" enctype="multipart/form-data"
+			action="controllerservlet?action=importAction" >
 			File to upload: <input type="file" name="upfile"><br /> <br />
-			<input type="submit" value="Press"> to upload the file!
+			<input type="submit" value="upload" onclick="return testEmpty()" > to upload the file!
 		</form>
 
 	</div>
