@@ -3,6 +3,7 @@ package de.htwg_konstanz.ebus.wholesaler.helper;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.xml.XMLConstants;
@@ -19,8 +20,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCountry;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOPurchasePrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
 
@@ -108,13 +112,13 @@ public class ImportDOM {
 		// test if Supplier is in Database
 		NodeList supplier = document.getElementsByTagName("SUPPLIER_NAME");
 		System.out.println(supplier.item(0).hasChildNodes());
-		String companyname;
+		String companyname = null;
 		BOSupplier endsupplier = new BOSupplier();
 
 		if (supplier.getLength() >= 1) {
 
 			companyname = supplier.item(0).getFirstChild().getNodeValue();
-
+			endsupplier.setCompanyname(companyname);
 		}
 
 		List<BOSupplier> suppliers = SupplierBOA.getInstance().findAll();
@@ -175,16 +179,8 @@ public class ImportDOM {
 				}
 				if (node.getNodeName().equals("ARTICLE_PRICE_DETAILS")) {
 
-					NamedNodeMap attrpricelists = node.getFirstChild()
-							.getAttributes();
-					// String attrpricelist=
-					// attrpricelist.getNamedItem("price_type");
-					/*
-					 * <ARTICLE_PRICE price_type="net_list"> DOM Attribut
-					 * Entscheidung Purchase oder Sale Price?? <PRICE_AMOUNT>
-					 * setAmount <PRICE_CURRENCY> setpricetype?? <TAX>
-					 * setTaxrate <TERRITORY> setCountry
-					 */
+					getArticlePriceDetails(node);
+
 				}
 
 			}
@@ -192,8 +188,58 @@ public class ImportDOM {
 		}
 	}
 
-	public void getArticleDetails(org.w3c.dom.Document document) {
+	public void getArticlePriceDetails(Node node) {
 
+		Node articleprice = node.getFirstChild();
+		NamedNodeMap attrpricelists = articleprice.getAttributes();
+		Node attrpricelist = attrpricelists.item(0);
+		String typeOfPrice = attrpricelist.getFirstChild().getNodeValue();
+		String amount = null;
+		String currency = null;
+		String taxrate = null;
+		String country = null;
+
+		for (int a = 0; a < articleprice.getChildNodes().getLength(); a++) {
+
+			Node subnode = articleprice.getChildNodes().item(a);
+			if (subnode.getNodeName().equals("PRICE_AMOUNT")) {
+				amount = subnode.getFirstChild().getNodeValue();
+			}
+			if (subnode.getNodeName().equals("PRICE_CURRENCY")) {
+				currency = subnode.getFirstChild().getNodeValue();
+			}
+			if (subnode.getNodeName().equals("TAX")) {
+				taxrate = subnode.getFirstChild().getNodeValue();
+			}
+			// TODO mehr als ein Territory ??
+			if (subnode.getNodeName().equals("TERRITORY")) {
+				country = subnode.getFirstChild().getNodeValue();
+			}
+			// convert String to BigDecimal to make it possible to create a
+			// BOPurchasePrice with the parameters amount and tax
+			BigDecimal tax = new BigDecimal(taxrate);
+			BigDecimal priceamount = new BigDecimal(amount);
+
+			// Create an countryobject to set a country for the price
+			BOCountry countryobj = new BOCountry();
+			countryobj.setIsocode(country);
+
+			// create an Object BOPurchaseprice
+			BOPurchasePrice price = new BOPurchasePrice(priceamount, tax,
+					typeOfPrice);
+
+			// set a Country for the price
+			price.setCountry(countryobj);
+
+			// TODO set a Product for the Price
+
+			// set a Currency for the Price
+
+			// writes PricetoDatabase
+			PriceBOA priceboa = PriceBOA.getInstance();
+			priceboa.saveOrUpdatePurchasePrice(price);
+
+		}
 	}
 
 	public void uploadFile() {

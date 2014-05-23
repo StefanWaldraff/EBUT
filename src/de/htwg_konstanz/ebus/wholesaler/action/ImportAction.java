@@ -22,7 +22,6 @@ package de.htwg_konstanz.ebus.wholesaler.action;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,15 +104,12 @@ public class ImportAction implements IAction {
 						new ImportDOM(iSt);
 
 					}
-				} else {
-					PrintWriter writer = response.getWriter();
-					writer.write("Keine Datei gewählt!");
-					writer.flush();
-					writer.close();
 				}
 
 				request.setAttribute("message",
 						"Upload has been done successfully!");
+				// servletContext.getRequestDispatcher("/import.jsp").forward(
+				// request, response);
 
 			} catch (Exception ex) {
 				request.setAttribute("message",

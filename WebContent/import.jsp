@@ -34,6 +34,8 @@
 			File to upload: <input type="file" name="upfile"><br /> <br />
 			<input type="submit" value="upload" onclick="return testEmpty()" > to upload the file!
 		</form>
+		
+		<!-- <h2>${message}</h2> -->
 
 	</div>
 </body>
