@@ -14,10 +14,12 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
 
 public class ImportDOM {
@@ -42,20 +44,26 @@ public class ImportDOM {
 			org.w3c.dom.Document document = db.parse(xml);
 
 			if (this.validate(document)) {
-				getSupplier(document);
-				writeToDatabase(getSupplier(document));
+				if (getSupplier(document) != null) {
+					writeSupplierNameToDatabase(getSupplier(document));
+
+				} else {
+					System.out.println("Supplier not found in Database");
+				}
+			} else {
+				System.out.println("Document not valide");
 			}
 
 			this.dom = document;
 
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
+			System.out.println("ParserConfigurationException");
 			e.printStackTrace();
 		} catch (SAXException e) {
-			// TODO Auto-generated catch block
+			System.out.println("SaxException");
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("IOException");
 			e.printStackTrace();
 		}
 	}
@@ -101,14 +109,12 @@ public class ImportDOM {
 		// test if Supplier is in Database
 		NodeList supplier = document.getElementsByTagName("SUPPLIER_NAME");
 		System.out.println(supplier.item(0).hasChildNodes());
-		String companyname = null;
+		String companyname;
 		BOSupplier endsupplier = null;
 
 		if (supplier.getLength() >= 1) {
 
 			companyname = supplier.item(0).getFirstChild().getNodeValue();
-			// TODO writeToDatabase(new
-			// BOSupplier().setCompanyname(companyname));
 
 		}
 
@@ -123,10 +129,34 @@ public class ImportDOM {
 		return endsupplier;
 	}
 
-	public void writeToDatabase(BOSupplier sup) {
+	public void writeSupplierNameToDatabase(BOSupplier sup) {
 
-		SupplierBOA supboa = null;
+		SupplierBOA supboa = SupplierBOA.getInstance();
 		supboa.saveOrUpdate(sup);
+
+	}
+
+	public void writeArticleDetailsToDatabase(org.w3c.dom.Document document) {
+		ProductBOA pboa = ProductBOA.getInstance();
+
+		NodeList articles = document.getElementsByTagName("ARTICLE");
+
+		for (int i = 0; i <= articles.getLength(); i++) {
+
+			NodeList children = articles.item(i).getChildNodes();
+			for (int j = 0; j < children.getLength(); j++) {
+				Node node = children.item(j);
+				if (node.getNodeName().equals("SUPPLIER_AID")) {
+
+				}
+				if (node.getNodeName().equals("ARTICLE_DETAILS")) {
+
+				}
+			}
+		}
+	}
+
+	public void getArticleDetails(org.w3c.dom.Document document) {
 
 	}
 
