@@ -39,7 +39,7 @@ import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
 import de.htwg_konstanz.ebus.wholesaler.demo.IAction;
 import de.htwg_konstanz.ebus.wholesaler.demo.LoginBean;
 import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
-import de.htwg_konstanz.ebus.wholesaler.main.ImportDOM;
+import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
 
 /**
  * The LoginAction processes an authentication request.
@@ -101,7 +101,7 @@ public class ImportAction implements IAction {
 						InputStream iSt = item.getInputStream();
 						// Creates ImportDOM and with the xml Stream as a
 						// parameter
-						new ImportDOM(iSt);
+						new DomInteractor(iSt);
 
 					}
 				}

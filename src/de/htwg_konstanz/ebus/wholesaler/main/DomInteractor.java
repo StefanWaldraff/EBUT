@@ -31,16 +31,16 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
 
-public class ImportDOM {
+public class DomInteractor {
 
 	org.w3c.dom.Document dom;
 
-	public ImportDOM(InputStream xml) {
+	public DomInteractor(InputStream xml) {
 		try {
 			// Parsing of a XML-Document through Java
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			// configure Parsing Process with Factory
-			dbf.setValidating(true);
+			dbf.setValidating(false);
 			dbf.setExpandEntityReferences(true);
 			// ignore Whitespaces
 			dbf.setIgnoringElementContentWhitespace(true);
