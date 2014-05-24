@@ -26,6 +26,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.w3c.dom.Document;
+
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.security.Security;
@@ -33,6 +35,7 @@ import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
 import de.htwg_konstanz.ebus.wholesaler.demo.IAction;
 import de.htwg_konstanz.ebus.wholesaler.demo.LoginBean;
 import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
+import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
 
 /**
  * The LoginAction processes an authentication request.
@@ -42,6 +45,8 @@ import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
  * @author tdi
  */
 public class ExportAction implements IAction {
+
+	private List<String> errorList;
 
 	public ExportAction() {
 		super();
@@ -75,7 +80,8 @@ public class ExportAction implements IAction {
 			// resources.
 			if (Security.getInstance().isUserAllowed(loginBean.getUser(),
 					Security.RESOURCE_ALL, Security.ACTION_READ)) {
-				doExport(request, errorList);
+				this.errorList = errorList;
+				doExport(request);
 			} else {
 				// authorization failed -> show error message
 				errorList.add("You are not allowed to perform this action!");
@@ -101,8 +107,7 @@ public class ExportAction implements IAction {
 				|| actionName.equalsIgnoreCase(Constants.ACTION_EXPORT_XHTML);
 	}
 
-	private void doExport(HttpServletRequest request,
-			ArrayList<String> errorList) {
+	private void doExport(HttpServletRequest request) {
 		if (request.getParameter("type") != null)
 			// only called by page loading -> no action
 			return;
@@ -111,9 +116,24 @@ public class ExportAction implements IAction {
 		String match = request.getParameter("match");
 
 		List<BOProduct> productList = filterProductList(request, match);
-		if (productList.isEmpty())
+		if (productList.isEmpty()) {
 			// no products remaining after filtering -> error
 			errorList.add("No matching products found for pattern: " + match);
+			return;
+		}
+		Document dom = DomInteractor.createDomFromData(productList);
+		DomInteractor.validateXml(dom, errorList);
+		if (errorList.isEmpty()) {
+			switch (action) {
+			case Constants.ACTION_EXPORT_XML:
+				// TODO write file and provide it
+				break;
+			case Constants.ACTION_EXPORT_XHTML:
+				// TODO convert to XHTML-DOM, validate, write file and provide
+				// it
+				break;
+			}
+		}
 	}
 
 	private List<BOProduct> filterProductList(HttpServletRequest request,
@@ -134,4 +154,5 @@ public class ExportAction implements IAction {
 		}
 		return filteredList;
 	}
+
 }

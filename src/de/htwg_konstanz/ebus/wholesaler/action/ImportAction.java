@@ -32,7 +32,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.w3c.dom.Document;
 
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.security.Security;
 import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
@@ -50,9 +53,7 @@ import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
  */
 public class ImportAction implements IAction {
 
-	public static final String ACTION_SHOW_PRODUCT_LIST = "showProductList";
-	public static final String PARAM_LOGIN_BEAN = "loginBean";
-	private static final String PARAM_PRODUCT_LIST = "productList";
+	private List<String> errorList = null;
 
 	public ImportAction() {
 		super();
@@ -78,6 +79,8 @@ public class ImportAction implements IAction {
 		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 		if (isMultipart) {
 
+			this.errorList = errorList;
+
 			// configures upload settings
 			DiskFileItemFactory factory = new DiskFileItemFactory();
 
@@ -101,7 +104,7 @@ public class ImportAction implements IAction {
 						InputStream iSt = item.getInputStream();
 						// Creates ImportDOM and with the xml Stream as a
 						// parameter
-						new DomInteractor(iSt);
+						return handleImport(iSt);
 
 					}
 				}
@@ -122,7 +125,7 @@ public class ImportAction implements IAction {
 
 		// get the login bean from the session
 		LoginBean loginBean = (LoginBean) request.getSession(true)
-				.getAttribute(PARAM_LOGIN_BEAN);
+				.getAttribute(Constants.PARAM_LOGIN_BEAN);
 
 		// ensure that the user is logged in
 		if (loginBean != null && loginBean.isLoggedIn()) {
@@ -133,10 +136,6 @@ public class ImportAction implements IAction {
 			// resources.
 			if (Security.getInstance().isUserAllowed(loginBean.getUser(),
 					Security.RESOURCE_ALL, Security.ACTION_READ)) {
-				// find all available products and put it to the session
-				List<?> productList = ProductBOA.getInstance().findAll();
-				request.getSession(true).setAttribute(PARAM_PRODUCT_LIST,
-						productList);
 
 				// redirect to the import page
 				return "import.jsp";
@@ -165,5 +164,34 @@ public class ImportAction implements IAction {
 	 */
 	public boolean accepts(String actionName) {
 		return actionName.equalsIgnoreCase(Constants.ACTION_IMPORT);
+	}
+
+	private boolean noError() {
+		return errorList.isEmpty();
+	}
+
+	private String handleImport(InputStream xmlDocument) {
+		Document dom = DomInteractor.createDomFromXml(xmlDocument, errorList);
+		if (noError())
+			DomInteractor.validateXml(dom, errorList);
+		BOSupplier supplier = null;
+		if (noError())
+			supplier = DomInteractor.containsValideSupplier(dom, errorList);
+		if (noError())
+			deleteAllSupplierProductsFromDb(supplier);
+		if (noError())
+			DomInteractor.writeDomToDb(dom, errorList);
+		return noError() ? "import.jsp" : "welcome.jsp";
+	}
+
+	private void deleteAllSupplierProductsFromDb(BOSupplier supplier) {
+		// TODO check if this is enough or do we have to delete all SalesPrices
+		// and so on...
+		ProductBOA boa = ProductBOA.getInstance();
+		List<BOProduct> allProducts = boa.findAll();
+		for (BOProduct boProduct : allProducts) {
+			if (boProduct.getSupplier().equals(supplier))
+				boa.delete(boProduct);
+		}
 	}
 }
