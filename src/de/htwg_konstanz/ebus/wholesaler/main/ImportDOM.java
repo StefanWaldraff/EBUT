@@ -1,4 +1,4 @@
-package de.htwg_konstanz.ebus.wholesaler.helper;
+package de.htwg_konstanz.ebus.wholesaler.main;
 
 import java.io.File;
 import java.io.IOException;
