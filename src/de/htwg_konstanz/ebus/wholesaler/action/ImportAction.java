@@ -108,6 +108,7 @@ public class ImportAction implements IAction {
 
 				request.setAttribute("message",
 						"Upload has been done successfully!");
+				// TODO need to see that upload was sucessfull
 				// servletContext.getRequestDispatcher("/import.jsp").forward(
 				// request, response);
 

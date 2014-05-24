@@ -21,9 +21,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCountry;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCurrency;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOOrderItemPurchase;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOPurchasePrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.OrderItemBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
@@ -154,32 +157,44 @@ public class ImportDOM {
 				Node node = children.item(j);
 				if (node.getNodeName().equals("SUPPLIER_AID")) {
 					String sAID = node.getFirstChild().getNodeValue();
-					System.out.println("foundSAID:"
-							+ product.getSupplier().getSupplierNumber()
-									.equals(sAID));
-					// TODO Write Supplier AID to Database
+					BOSupplier supplier = this.getSupplier(document);
+					product.setSupplier(supplier);
+
+					// Test if SAID is really the right to product
+					// TODO why do we need SAID ???
+					if (product.getSupplier().getSupplierNumber().equals(sAID)) {
+						System.out
+								.println("SupplierAID same as Supplier Number");
+					}
+
 				}
 				if (node.getNodeName().equals("ARTICLE_DETAILS")) {
-					String ean = node.getFirstChild().getNodeValue();
-					// String descrshort=node.;
-					String descrlong = node.getLastChild().getNodeValue();
-					System.out.println(ean);
-					System.out.println(descrlong);
-					// product.setLongDescription(descrlong);
-					// product.setShortDescription(shortDescription)
+					String descrshort = null;
+					String descrlong = null;
+
+					for (int a = 0; a < node.getChildNodes().getLength(); a++) {
+
+						Node subnode = node.getChildNodes().item(a);
+
+						if (subnode.getNodeName().equals("DESCRIPTION_SHORT")) {
+							descrshort = subnode.getFirstChild().getNodeValue();
+						}
+						if (subnode.getNodeName().equals("DESCRIPTION_LONG")) {
+							descrlong = subnode.getFirstChild().getNodeValue();
+						}
+						// set Long- and ShortDescription for product
+						product.setLongDescription(descrlong);
+						product.setShortDescription(descrshort);
+					}
 				}
 				if (node.getNodeName().equals("ARTICLE_ORDER_DETAILS")) {
-					String orderunit = node.getFirstChild().getNodeValue();
-					System.out.println("orderunit");
-					// ORDER_UNIT --> BOOderItemPurchase.setOrderUnit
-					// CONTENT_UNIT -->
-					// BOOderItemPurchase.setProductDescription??
-					// NO_CU_PER_OU --> BOOderItemPurchase.setUnitPrice
+
+					getArticleOrderDetails(node);
 
 				}
 				if (node.getNodeName().equals("ARTICLE_PRICE_DETAILS")) {
 
-					getArticlePriceDetails(node);
+					getArticlePriceDetails(node, product);
 
 				}
 
@@ -188,10 +203,53 @@ public class ImportDOM {
 		}
 	}
 
-	public void getArticlePriceDetails(Node node) {
+	public void getArticleOrderDetails(Node node) {
 
+		String orderunit = null;
+		String contentunit = null;
+		String nocuperou = null;
+		// iterates over all Childnodes of ARTICLE_ORDER_DETAILS
+		for (int a = 0; a < node.getChildNodes().getLength(); a++) {
+
+			Node subnode = node.getChildNodes().item(a);
+
+			if (subnode.getNodeName().equals("ORDER_UNIT")) {
+				orderunit = subnode.getFirstChild().getNodeValue();
+			}
+			if (subnode.getNodeName().equals("CONTENT_UNIT")) {
+				contentunit = subnode.getFirstChild().getNodeValue();
+			}
+			if (subnode.getNodeName().equals("NO_CU_PER_OU")) {
+				nocuperou = subnode.getFirstChild().getNodeValue();
+			}
+			// new Obj. BOOrderItemPurchase
+			BOOrderItemPurchase orderip = new BOOrderItemPurchase();
+
+			// set Orderunit for BOOrderItemPurchase
+			orderip.setOrderUnit(orderunit);
+
+			// TODO check if OrderItemNumber is really = Contentunit
+			Integer cunit = new Integer(contentunit);
+			orderip.setOrderItemNumber(cunit);
+
+			// TODO check if no_cu_per_ou for BOOrderItemPurchase is
+			// OrderItemNumber
+
+			// Create OrderItemBOA and save BOOrderItemPurchase
+			OrderItemBOA orderitemboa = OrderItemBOA.getInstance();
+			orderitemboa.saveOrUpdate(orderip);
+			// TODO Connection to Product??
+
+		}
+
+	}
+
+	public void getArticlePriceDetails(Node node, BOProduct product) {
+		// want to get Node ARTICLE_PRICE
 		Node articleprice = node.getFirstChild();
+		// get all Attributes of ARTICLE_PRICE
 		NamedNodeMap attrpricelists = articleprice.getAttributes();
+		// only want to get pricetype Attribut
 		Node attrpricelist = attrpricelists.item(0);
 		String typeOfPrice = attrpricelist.getFirstChild().getNodeValue();
 		String amount = null;
@@ -199,9 +257,11 @@ public class ImportDOM {
 		String taxrate = null;
 		String country = null;
 
+		// iterates over all Childnodes of ARTICLE_PRICE
 		for (int a = 0; a < articleprice.getChildNodes().getLength(); a++) {
 
 			Node subnode = articleprice.getChildNodes().item(a);
+			// search Childnode via name
 			if (subnode.getNodeName().equals("PRICE_AMOUNT")) {
 				amount = subnode.getFirstChild().getNodeValue();
 			}
@@ -224,6 +284,11 @@ public class ImportDOM {
 			BOCountry countryobj = new BOCountry();
 			countryobj.setIsocode(country);
 
+			// TODO is Currency for Country needed ?
+			BOCurrency currencyobj = new BOCurrency();
+			currencyobj.setCode(currency);
+			countryobj.setCurrency(currencyobj);
+
 			// create an Object BOPurchaseprice
 			BOPurchasePrice price = new BOPurchasePrice(priceamount, tax,
 					typeOfPrice);
@@ -231,11 +296,10 @@ public class ImportDOM {
 			// set a Country for the price
 			price.setCountry(countryobj);
 
-			// TODO set a Product for the Price
+			// set a Product for the Price
+			price.setProduct(product);
 
-			// set a Currency for the Price
-
-			// writes PricetoDatabase
+			// writes Price to Database
 			PriceBOA priceboa = PriceBOA.getInstance();
 			priceboa.saveOrUpdatePurchasePrice(price);
 
