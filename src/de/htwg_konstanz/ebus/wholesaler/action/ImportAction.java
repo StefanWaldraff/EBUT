@@ -35,7 +35,9 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.w3c.dom.Document;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.security.Security;
 import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
@@ -190,8 +192,12 @@ public class ImportAction implements IAction {
 		ProductBOA boa = ProductBOA.getInstance();
 		List<BOProduct> allProducts = boa.findAll();
 		for (BOProduct boProduct : allProducts) {
-			if (boProduct.getSupplier().equals(supplier))
+			if (boProduct.getSupplier().equals(supplier)) {
+				for (BOSalesPrice price : boProduct.getSalesPrices()) {
+					PriceBOA.getInstance().deleteSalesPrice(price);
+				}
 				boa.delete(boProduct);
+			}
 		}
 	}
 }
