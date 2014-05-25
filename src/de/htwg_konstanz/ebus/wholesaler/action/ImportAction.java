@@ -24,7 +24,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -58,7 +61,14 @@ import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
  */
 public class ImportAction implements IAction {
 
+	public static final String ADDED_SALES_PRICES = "addedSalesPrices";
+	public static final String ADDED_PURCHASE_PRICES = "addedPurchasePrices";
+	public static final String ADDED_PRODUCTS = "addedProducts";
+	public static final String DELETED_SALES_PRICES = "deletedSalesPrices";
+	public static final String DELETED_PURCASE_PRICES = "deletedPurcasePrices";
+	public static final String DELETED_PRODUCTS = "deletedProducts";
 	private List<String> errorList = null;
+	private final Map<String, AtomicInteger> updateFeedback = new HashMap<>();
 
 	public ImportAction() {
 		super();
@@ -103,6 +113,7 @@ public class ImportAction implements IAction {
 			try {
 				List<FileItem> items = upload.parseRequest(request);
 				if (items != null && items.size() > 0) {
+					initFeedbackMap();
 					// iterates over form's fields
 					for (FileItem item : items) {
 						// parse them in input stream
@@ -150,6 +161,15 @@ public class ImportAction implements IAction {
 			return "login.jsp";
 	}
 
+	private void initFeedbackMap() {
+		updateFeedback.put(DELETED_PRODUCTS, new AtomicInteger(0));
+		updateFeedback.put(DELETED_PURCASE_PRICES, new AtomicInteger(0));
+		updateFeedback.put(DELETED_SALES_PRICES, new AtomicInteger(0));
+		updateFeedback.put(ADDED_PRODUCTS, new AtomicInteger(0));
+		updateFeedback.put(ADDED_PURCHASE_PRICES, new AtomicInteger(0));
+		updateFeedback.put(ADDED_SALES_PRICES, new AtomicInteger(0));
+	}
+
 	/**
 	 * Each action itself decides if it is responsible to process the
 	 * corrensponding request or not. This means that the
@@ -178,7 +198,9 @@ public class ImportAction implements IAction {
 		if (noError())
 			deleteAllSupplierProductsFromDb(supplier);
 		if (noError())
-			DomInteractor.writeDomToDb(dom, errorList);
+			DomInteractor.writeDomToDb(dom, errorList, updateFeedback);
+		// TODO redirect to updatesuccess.jsp and pass updateFeedback map as
+		// parameters!?!
 		return noError() ? "import.jsp" : "welcome.jsp";
 	}
 
@@ -190,11 +212,15 @@ public class ImportAction implements IAction {
 		for (BOProduct boProduct : allProducts) {
 			if (boProduct.getSupplier().equals(supplier)) {
 				for (BOSalesPrice price : boProduct.getSalesPrices()) {
+					updateFeedback.get(DELETED_SALES_PRICES).incrementAndGet();
 					PriceBOA.getInstance().deleteSalesPrice(price);
 				}
 				for (BOPurchasePrice pprice : boProduct.getPurchasePrices()) {
+					updateFeedback.get(DELETED_PURCASE_PRICES)
+							.incrementAndGet();
 					PriceBOA.getInstance().deletePurchasePrice(pprice);
 				}
+				updateFeedback.get(DELETED_PRODUCTS).incrementAndGet();
 				boa.delete(boProduct);
 			}
 		}

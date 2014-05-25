@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -97,8 +99,9 @@ public final class DomInteractor {
 		return supplier;
 	}
 
-	public static void writeDomToDb(Document dom, List<String> errorList) {
-		DomRequester domInterpreter = new DomRequester(dom);
+	public static void writeDomToDb(Document dom, List<String> errorList,
+			Map<String, AtomicInteger> updateFeedback) {
+		DomRequester domInterpreter = new DomRequester(dom, updateFeedback);
 		BOSupplier supplier = domInterpreter.getSupplierFromName();
 		domInterpreter.getAllProducts(supplier);
 	}

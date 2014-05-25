@@ -5,6 +5,8 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -23,12 +25,20 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.OrderItemBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
+import de.htwg_konstanz.ebus.wholesaler.action.ImportAction;
 
 final class DomRequester {
+	private static final String SALE_FACTOR = "1.5";
 	private final Document dom;
+	private final Map<String, AtomicInteger> updateFeedback;
 
 	DomRequester(Document dom) {
+		this(dom, new HashMap<String, AtomicInteger>());
+	}
+
+	DomRequester(Document dom, Map<String, AtomicInteger> updateFeedback) {
 		this.dom = dom;
+		this.updateFeedback = updateFeedback;
 	}
 
 	BOSupplier getSupplierFromName() {
@@ -68,6 +78,8 @@ final class DomRequester {
 			case "ARTICLE_ORDER_DETAILS":
 				getArticleOrderDetails(node);
 				// TODO Connection to Product??
+				updateFeedback.get(ImportAction.ADDED_PRODUCTS)
+						.incrementAndGet();
 				ProductBOA.getInstance().saveOrUpdate(product);
 				break;
 			case "ARTICLE_PRICE_DETAILS":
@@ -127,7 +139,7 @@ final class DomRequester {
 					// Purchaseamount
 					BigDecimal purchaseamount = new BigDecimal(
 							(values.get("PRICE_AMOUNT")));
-					BigDecimal factor = new BigDecimal("1.5");
+					BigDecimal factor = new BigDecimal(SALE_FACTOR);
 					MathContext mc = new MathContext(4); // 4 precision
 					BigDecimal salesamount = purchaseamount
 							.multiply(factor, mc);
@@ -135,7 +147,11 @@ final class DomRequester {
 					salesprice.setProduct(product);
 
 					// saving Purchase and Salesprice in Database
+					updateFeedback.get(ImportAction.ADDED_PURCHASE_PRICES)
+							.incrementAndGet();
 					PriceBOA.getInstance().saveOrUpdate(purchaseprice);
+					updateFeedback.get(ImportAction.ADDED_SALES_PRICES)
+							.incrementAndGet();
 					PriceBOA.getInstance().saveOrUpdate(salesprice);
 				}
 			}
