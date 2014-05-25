@@ -88,37 +88,39 @@ final class DomRequester {
 			HashMap<String, String> values = new HashMap<>();
 			for (int k = 0; k < articlePriceData.getLength(); k++) {
 				Node dataNode = articlePriceData.item(k);
-				values.put(dataNode.getNodeName(), dataNode.getNodeValue());
-				// TODO mehr als ein Territory ??
-				// TODO is Currency for Country needed ?
-			}
+				if (!dataNode.getNodeName().equals("TERRITORY"))
+					values.put(dataNode.getNodeName(), dataNode.getNodeValue());
+				else {
+					BOCurrency currency = CurrencyBOA.getInstance()
+							.findCurrency(values.get("PRICE_CURRENCY"));
+					if (currency == null) {
+						currency = new BOCurrency();
+						currency.setCode(values.get("PRICE_CURRENCY"));
+						CurrencyBOA.getInstance().saveOrUpdate(currency);
+					}
+					BOCountry country = CountryBOA.getInstance().findCountry(
+							values.get("TERRITORY"));
+					if (country == null) {
+						country = new BOCountry();
+						country.setCurrency(currency);
+						country.setIsocode(values.get("TERRITORY"));
+						CountryBOA.getInstance().saveOrUpdate(country);
+					}
+					BOPurchasePrice price = new BOPurchasePrice();
+					price.setCountry(country);
+					price.setTaxrate(new BigDecimal(values.get("TAX")));
+					price.setPricetype(articlePriceType);
+					price.setAmount(new BigDecimal(values.get("PRICE_AMOUNT")));
+					price.setProduct(product);
 
-			BOCurrency currency = CurrencyBOA.getInstance().findCurrency(
-					values.get("PRICE_CURRENCY"));
-			if (currency == null) {
-				currency = new BOCurrency();
-				currency.setCode(values.get("PRICE_CURRENCY"));
-				CurrencyBOA.getInstance().saveOrUpdate(currency);
+					// TODO store product before price? -> look it up in the
+					// JavaDocs.
+					// return a list of BOPurchasePrice and call the method
+					// below after
+					// saving the product
+					PriceBOA.getInstance().saveOrUpdate(price);
+				}
 			}
-			BOCountry country = CountryBOA.getInstance().findCountry(
-					values.get("TERRITORY"));
-			if (country == null) {
-				country = new BOCountry();
-				country.setCurrency(currency);
-				country.setIsocode(values.get("TERRITORY"));
-				CountryBOA.getInstance().saveOrUpdate(country);
-			}
-			BOPurchasePrice price = new BOPurchasePrice();
-			price.setCountry(country);
-			price.setTaxrate(new BigDecimal(values.get("TAX")));
-			price.setPricetype(articlePriceType);
-			price.setAmount(new BigDecimal(values.get("PRICE_AMOUNT")));
-			price.setProduct(product);
-
-			// TODO store product before price.
-			// return a list of BOPurchasePrice and call the method below after
-			// saving the product
-			PriceBOA.getInstance().saveOrUpdate(price);
 		}
 	}
 
