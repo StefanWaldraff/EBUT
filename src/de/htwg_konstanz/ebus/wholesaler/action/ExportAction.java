@@ -25,7 +25,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,14 +32,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 
@@ -97,7 +88,7 @@ public class ExportAction implements IAction {
 			if (Security.getInstance().isUserAllowed(loginBean.getUser(),
 					Security.RESOURCE_ALL, Security.ACTION_READ)) {
 				this.errorList = errorList;
-				doExport(request, response);
+				handleExport(request, response);
 			} else {
 				// authorization failed -> show error message
 				errorList.add("You are not allowed to perform this action!");
@@ -123,9 +114,9 @@ public class ExportAction implements IAction {
 				|| actionName.equalsIgnoreCase(Constants.ACTION_EXPORT_XHTML);
 	}
 
-	private void doExport(HttpServletRequest request,
+	private void handleExport(HttpServletRequest request,
 			HttpServletResponse response) {
-		if (request.getParameter("type") != null)
+		if (request.getParameter("type") == null)
 			// only called by page loading -> no action
 			return;
 
@@ -143,67 +134,55 @@ public class ExportAction implements IAction {
 		if (errorList.isEmpty()) {
 			switch (action) {
 			case Constants.ACTION_EXPORT_XML:
-				// TODO write file and provide it
+				// TODO test it!!! Remove link
 				// http://www.journaldev.com/1964/servlet-upload-file-and-download-file-example
-				TransformerFactory tranFactory = TransformerFactory
-						.newInstance();
-				Transformer aTransformer;
-				File f = null;
-				String fileName = "ExportProduktkatalog.xml";
-				try {
-					aTransformer = tranFactory.newTransformer();
-					Source src = new DOMSource(dom);
-					f = new File(fileName);
-					Result dest = new StreamResult(f);
-					aTransformer.transform(src, dest);
-				} catch (TransformerConfigurationException e) {
-					errorList.add("Error while configure Transformer");
-					e.printStackTrace();
-				} catch (TransformerException e) {
-					errorList.add("Error while transforming DOMSource to File");
-					e.printStackTrace();
-				}
-				ServletContext ctx = request.getSession().getServletContext();
-				InputStream fis;
-				try {
-					fis = new FileInputStream(f);
-					String mimeType = ctx.getMimeType(f.getAbsolutePath());
-					response.setContentType(mimeType != null ? mimeType
-							: "application/octet-stream");
-					response.setContentLength((int) f.length());
-					response.setHeader("Content-Disposition",
-							"attachment; filename=\"" + fileName + "\"");
-					ServletOutputStream os = response.getOutputStream();
-
-					byte[] bufferData = new byte[1024];
-					int read = 0;
-
-					while ((read = fis.read(bufferData)) != -1) {
-						os.write(bufferData, 0, read);
-					}
-					os.flush();
-					os.close();
-					fis.close();
-					PrintWriter out = response.getWriter();
-					out.write("<a href=\"UploadDownloadFileServlet?fileName="
-							+ f.getName() + "\">Download " + f.getName()
-							+ "</a>");
-					System.out
-							.println("File downloaded at client successfully");
-				} catch (FileNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				createAndProvideFile(request, response, dom, "xml");
 
 				break;
 			case Constants.ACTION_EXPORT_XHTML:
-				// TODO convert to XHTML-DOM, validate, write file and provide
-				// it
+
+				// TODO transform XML DOM to XHTML DOM
+
+				createAndProvideFile(request, response, dom, "xhtml");
 				break;
 			}
+		}
+	}
+
+	private void createAndProvideFile(HttpServletRequest request,
+			HttpServletResponse response, Document dom, String fileExtension) {
+		File targetFile = DomInteractor.createFileFromDom(dom, fileExtension,
+				errorList);
+		if (errorList.isEmpty())
+			sendFile(request, response, targetFile);
+	}
+
+	private void sendFile(HttpServletRequest request,
+			HttpServletResponse response, File targetFile) {
+		ServletContext ctx = request.getSession().getServletContext();
+
+		try (InputStream fis = new FileInputStream(targetFile);
+				ServletOutputStream os = response.getOutputStream();) {
+			String mimeType = ctx.getMimeType(targetFile.getAbsolutePath());
+			response.setContentType(mimeType != null ? mimeType
+					: "application/octet-stream");
+			response.setContentLength((int) targetFile.length());
+			response.setHeader("Content-Disposition", "attachment; filename=\""
+					+ targetFile.getName() + "\"");
+
+			byte[] bufferData = new byte[1024];
+			int read = 0;
+
+			while ((read = fis.read(bufferData)) != -1) {
+				os.write(bufferData, 0, read);
+			}
+			os.flush();
+
+			System.out.println("File downloaded at client successfully");
+		} catch (FileNotFoundException e) {
+			errorList.add("Could not find file.");
+		} catch (IOException e) {
+			errorList.add("Could not send file.");
 		}
 	}
 

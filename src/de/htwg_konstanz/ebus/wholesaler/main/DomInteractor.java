@@ -3,6 +3,8 @@ package de.htwg_konstanz.ebus.wholesaler.main;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,7 +14,14 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
@@ -134,6 +143,31 @@ public final class DomInteractor {
 		}
 
 		return document;
+	}
+
+	public static File createFileFromDom(Document dom, String fileExtension,
+			List<String> errorList) {
+		TransformerFactory tranFactory = TransformerFactory.newInstance();
+		Transformer aTransformer;
+		File file = null;
+
+		// create a unique filename
+		String fileName = (new BigInteger(130, new SecureRandom()))
+				.toString(32) + "." + fileExtension;
+
+		try {
+			aTransformer = tranFactory.newTransformer();
+			Source src = new DOMSource(dom);
+			file = new File(fileName);
+			Result dest = new StreamResult(file);
+			aTransformer.transform(src, dest);
+		} catch (TransformerConfigurationException e) {
+			errorList.add("Error while configure Transformer");
+		} catch (TransformerException e) {
+			errorList.add("Error while transforming DOMSource to File");
+		}
+
+		return file;
 	}
 
 }
