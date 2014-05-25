@@ -20,11 +20,7 @@
 	
 
 		
-		<h3>Upload was successfully</h3>
-		
-		<h5>Products deleted: </h5>
-		
-		<h5>Products included: </h5>
+		<h3>Export was successfully</h3>
 		
 		
 

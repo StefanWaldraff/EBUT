@@ -121,7 +121,7 @@ public class ExportAction implements IAction {
 			errorList.add("No matching products found for pattern: " + match);
 			return;
 		}
-		Document dom = DomInteractor.createDomFromData(productList);
+		Document dom = DomInteractor.createDomFromData(productList, errorList);
 		DomInteractor.validateXml(dom, errorList);
 		if (errorList.isEmpty()) {
 			switch (action) {

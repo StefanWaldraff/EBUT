@@ -16,6 +16,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
@@ -102,8 +103,34 @@ public final class DomInteractor {
 		domInterpreter.getAllProducts(supplier);
 	}
 
-	public static Document createDomFromData(List<BOProduct> products) {
-		// TODO
-		return null;
+	public static Document createDomFromData(List<BOProduct> products,
+			List<String> errorList) {
+
+		Document document = null;
+
+		try {
+			document = DocumentBuilderFactory.newInstance()
+					.newDocumentBuilder().newDocument();
+
+			DomProcessor domProcessor = new DomProcessor(document);
+			Element root = document.createElement("BMECAT");
+
+			root.setAttribute("version", "1.2");
+			root.setAttribute("xmlns:xsi",
+					"http://www.w3.org/2001/XMLSchema-instance");
+			domProcessor.appendHeader(root);
+			domProcessor.appendProductCatalog(root, products);
+
+			document.appendChild(root);
+		} catch (ParserConfigurationException e) {
+			errorList.add("Error configure Parser");
+			e.printStackTrace();
+		} catch (FactoryConfigurationError e) {
+			errorList.add("Error while configurate Factory");
+			e.printStackTrace();
+		}
+
+		return document;
 	}
+
 }

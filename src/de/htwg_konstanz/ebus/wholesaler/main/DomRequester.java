@@ -1,6 +1,7 @@
 package de.htwg_konstanz.ebus.wholesaler.main;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,7 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCurrency;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOOrderItemPurchase;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOPurchasePrice;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.CountryBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.CurrencyBOA;
@@ -49,7 +51,7 @@ final class DomRequester {
 			getArticleData(articleData, product);
 			products.add(product);
 		}
-		// TODO generate BOSalesPrice
+
 		return products;
 	}
 
@@ -106,19 +108,35 @@ final class DomRequester {
 						country.setIsocode(values.get("TERRITORY"));
 						CountryBOA.getInstance().saveOrUpdate(country);
 					}
-					BOPurchasePrice price = new BOPurchasePrice();
-					price.setCountry(country);
-					price.setTaxrate(new BigDecimal(values.get("TAX")));
-					price.setPricetype(articlePriceType);
-					price.setAmount(new BigDecimal(values.get("PRICE_AMOUNT")));
-					price.setProduct(product);
+					// set Country, Taxrate and Pricetype for Purchaseprice
+					BOPurchasePrice purchaseprice = new BOPurchasePrice();
+					purchaseprice.setCountry(country);
+					purchaseprice.setTaxrate(new BigDecimal(values.get("TAX")));
+					purchaseprice.setPricetype(articlePriceType);
+					purchaseprice.setAmount(new BigDecimal(values
+							.get("PRICE_AMOUNT")));
+					purchaseprice.setProduct(product);
 
-					// TODO store product before price? -> look it up in the
-					// JavaDocs.
-					// return a list of BOPurchasePrice and call the method
-					// below after
-					// saving the product
-					PriceBOA.getInstance().saveOrUpdate(price);
+					// set Country, Taxrate and Pricetype for SalesPrice
+					BOSalesPrice salesprice = new BOSalesPrice();
+					salesprice.setCountry(country);
+					salesprice.setTaxrate(new BigDecimal(values.get("TAX")));
+					salesprice.setPricetype(articlePriceType);
+
+					// calculate Salesamount, which has an amount 1.5 times of
+					// Purchaseamount
+					BigDecimal purchaseamount = new BigDecimal(
+							(values.get("PRICE_AMOUNT")));
+					BigDecimal factor = new BigDecimal("1.5");
+					MathContext mc = new MathContext(4); // 4 precision
+					BigDecimal salesamount = purchaseamount
+							.multiply(factor, mc);
+					salesprice.setAmount(salesamount);
+					salesprice.setProduct(product);
+
+					// saving Purchase and Salesprice in Database
+					PriceBOA.getInstance().saveOrUpdate(purchaseprice);
+					PriceBOA.getInstance().saveOrUpdate(salesprice);
 				}
 			}
 		}
@@ -134,13 +152,13 @@ final class DomRequester {
 				orderip.setOrderUnit(nodeValue);
 				break;
 			case "CONTENT_UNIT":
-				// TODO check if OrderItemNumber is really = Contentunit
+				// TODO check if Contentunit is needed was not last semesters
 				orderip.setOrderItemNumber(new Integer(nodeValue));
 				break;
 			case "NO_CU_PER_OU":
 				// TODO: unused!!!
 				// check if no_cu_per_ou for BOOrderItemPurchase is
-				// OrderItemNumber
+				// is needed was not the last semesters
 				break;
 			}
 		}

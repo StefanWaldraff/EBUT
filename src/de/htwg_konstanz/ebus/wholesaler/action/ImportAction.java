@@ -21,6 +21,7 @@
 package de.htwg_konstanz.ebus.wholesaler.action;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,11 +31,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.w3c.dom.Document;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOPurchasePrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
@@ -111,16 +114,9 @@ public class ImportAction implements IAction {
 					}
 				}
 
-				request.setAttribute("message",
-						"Upload has been done successfully!");
-				// TODO need to see that upload was sucessfull
-				// servletContext.getRequestDispatcher("/uploadsuccess.jsp")
-				// .forward(request, response);
+			} catch (FileUploadException | IOException ex) {
 
-			} catch (Exception ex) {
-				request.setAttribute("message",
-						"There was an error: " + ex.getMessage());
-				System.out.println("Datei ausgewählt: " + ex.getMessage());
+				errorList.add("File couldn't be uploaded");
 			}
 
 		}
@@ -187,14 +183,17 @@ public class ImportAction implements IAction {
 	}
 
 	private void deleteAllSupplierProductsFromDb(BOSupplier supplier) {
-		// TODO check if this is enough or do we have to delete all SalesPrices
-		// and so on...
+
+		// TODO Feedback
 		ProductBOA boa = ProductBOA.getInstance();
 		List<BOProduct> allProducts = boa.findAll();
 		for (BOProduct boProduct : allProducts) {
 			if (boProduct.getSupplier().equals(supplier)) {
 				for (BOSalesPrice price : boProduct.getSalesPrices()) {
 					PriceBOA.getInstance().deleteSalesPrice(price);
+				}
+				for (BOPurchasePrice pprice : boProduct.getPurchasePrices()) {
+					PriceBOA.getInstance().deletePurchasePrice(pprice);
 				}
 				boa.delete(boProduct);
 			}
