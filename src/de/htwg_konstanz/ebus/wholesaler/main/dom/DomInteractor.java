@@ -101,7 +101,7 @@ public final class DomInteractor {
 			List<String> errorList) {
 		BOSupplier supplier = new DomRequester(dom).getSupplierFromName();
 		if (supplier.getCompanyname() == null) {
-			errorList.add("Supplier " + supplier + " not found in database.");
+			errorList.add("Supplier not found in database.");
 			return null;
 		}
 

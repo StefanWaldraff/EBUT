@@ -86,6 +86,10 @@ public class ImportAction implements IAction {
 				if (ServletFileUpload.isMultipartContent(request)) {
 					new ImportHandler(errorList, updateFeedback).process(
 							request, response);
+					if (!errorList.isEmpty()) {
+						request.getSession(true).setAttribute("updateFeedback",
+								new HashMap<String, AtomicInteger>());
+					}
 				}
 				// redirect to the import page
 				return "import.jsp";
