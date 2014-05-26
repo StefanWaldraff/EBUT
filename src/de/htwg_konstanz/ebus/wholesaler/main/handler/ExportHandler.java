@@ -14,12 +14,26 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
 import de.htwg_konstanz.ebus.wholesaler.main.dom.DomInteractor;
 
+/** Controls Export from Database to XMLFile an XHTML. */
 public class ExportHandler {
 	private final List<String> errorList;
 
+	/**
+	 * Constructor of ExportHandler
+	 * 
+	 * @param errorList
+	 * */
 	public ExportHandler(List<String> errorList) {
 		this.errorList = errorList;
 	}
+
+	/**
+	 * calls methods for exporting XML file or XHTML File.
+	 * 
+	 * @param request
+	 * 
+	 * @param response
+	 */
 
 	public void process(HttpServletRequest request, HttpServletResponse response) {
 		if (request.getParameter("type") == null)
@@ -61,6 +75,13 @@ public class ExportHandler {
 		}
 	}
 
+	/**
+	 * exporting only parts from productcatalog to
+	 * 
+	 * @param request
+	 * @param toMatch
+	 *            String of what should be matched
+	 */
 	private List<BOProduct> filterProductList(HttpServletRequest request,
 			String toMatch) {
 		List<BOProduct> productList = ProductBOA.getInstance().findAll();

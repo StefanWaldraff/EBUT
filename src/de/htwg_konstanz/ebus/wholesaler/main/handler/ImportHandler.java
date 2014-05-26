@@ -23,8 +23,12 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa._BaseBOA;
 import de.htwg_konstanz.ebus.wholesaler.main.dom.DomInteractor;
 
+/**
+ * Controls Import of File, parsing and saving it in Databas
+ */
 public class ImportHandler {
 
 	public static final String ADDED_SALES_PRICES = "added sales prices";
@@ -44,6 +48,11 @@ public class ImportHandler {
 		this.updateFeedback = updateFeedback;
 	}
 
+	/**
+	 * Calls feedback methods to get amount of deleted and added products and
+	 * prices.
+	 * 
+	 */
 	private void initFeedbackMap() {
 		updateFeedback.put(DELETED_PRODUCTS, new AtomicInteger(0));
 		updateFeedback.put(DELETED_PURCASE_PRICES, new AtomicInteger(0));
@@ -53,10 +62,22 @@ public class ImportHandler {
 		updateFeedback.put(ADDED_SALES_PRICES, new AtomicInteger(0));
 	}
 
+	/**
+	 * error method.
+	 * 
+	 * @return that errorList is not empty
+	 */
 	private boolean error() {
 		return !errorList.isEmpty();
 	}
 
+	/**
+	 * Upload File in InputStream.
+	 * 
+	 * @param request
+	 * @return InputStream
+	 * 
+	 */
 	private InputStream getFileStream(HttpServletRequest request) {
 
 		// configures upload settings
@@ -92,6 +113,14 @@ public class ImportHandler {
 		return iSt;
 	}
 
+	/**
+	 * Calls Methods of DomInteractor to create a Document, validate it and
+	 * write it to DB.
+	 * 
+	 * @param response
+	 * 
+	 * @param request
+	 */
 	public void process(HttpServletRequest request, HttpServletResponse response) {
 		initFeedbackMap();
 		InputStream xmlDocument = getFileStream(request);
@@ -116,6 +145,12 @@ public class ImportHandler {
 		request.getSession(true).setAttribute("updateFeedback", updateFeedback);
 	}
 
+	/**
+	 * Deletes all Product and Suppliers from Database if they exist.
+	 * 
+	 * @param supplier
+	 *            {@link BOSupplier}
+	 */
 	private void deleteAllSupplierProductsFromDb(BOSupplier supplier) {
 		ProductBOA boa = ProductBOA.getInstance();
 		List<BOProduct> allProducts = boa.findAll();
@@ -133,6 +168,8 @@ public class ImportHandler {
 				updateFeedback.get(DELETED_PRODUCTS).incrementAndGet();
 				boa.delete(boProduct);
 			}
+			// TODO
+			_BaseBOA.getInstance().commit();
 		}
 	}
 }

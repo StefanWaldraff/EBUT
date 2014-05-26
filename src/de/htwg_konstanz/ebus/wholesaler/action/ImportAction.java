@@ -101,9 +101,10 @@ public class ImportAction implements IAction {
 				// redirect to the welcome page
 				return "welcome.jsp";
 			}
-		} else
+		} else {
 			// redirect to the login page
 			return "login.jsp";
+		}
 	}
 
 	/**

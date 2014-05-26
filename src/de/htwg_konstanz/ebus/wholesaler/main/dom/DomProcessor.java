@@ -8,75 +8,111 @@ import org.w3c.dom.Element;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 
+/**
+ * writes Datas to XML Document
+ * */
 public class DomProcessor {
 
 	private final Document document;
 
+	/**
+	 * Class Constructor
+	 * 
+	 * @param Document
+	 * */
 	DomProcessor(Document dom) {
 
 		this.document = dom;
 
 	}
 
-	void addProductCatalog(Element root, List<BOProduct> productList) {
-		// creates a new element "T_NEW_CATALOG"
-		Element catalog = document.createElement("T_NEW_CATALOG");
+	/**
+	 * Creates a new element "T_NEW_CATALOG" and appends the product catalog to
+	 * the document.
+	 * 
+	 * @param root
+	 *            the actually element you like to append the product catalog
+	 * 
+	 * @param productList
+	 *            a {@link BOProduct} list with all products to export
+	 */
 
+	void addProductCatalog(Element root, List<BOProduct> productList) {
+		Element catalog = document.createElement("T_NEW_CATALOG");
 		for (BOProduct product : productList) {
-			// calls appendArticle Method
 			addArticle(catalog, product);
 		}
-		// appends the product catalog to the document
 		root.appendChild(catalog);
 	}
 
+	/**
+	 * Creates an element "ARTICLE" for the product catalog and calls other
+	 * methods to create the article in the catalog.
+	 * 
+	 * @param catalog
+	 *            the element where to append all the products to export
+	 * 
+	 * @param product
+	 *            a {@link BOProduct} product to add to the catalog
+	 * 
+	 */
 	private void addArticle(Element catalog, BOProduct product) {
-		// Creates an element "ARTICLE" for the product catalog
+
 		Element article = document.createElement("ARTICLE");
-		// calls Method to get SupplierAID as a ChildNode
 		addSupplierAID(product, article);
-		// calls Method to get ArticleDetails as a ChildNode
 		addArticleDetails(product, article);
-		// calls Method to get ArticleOrderDetails as a ChildNode
 		addArticleOrderDetails(article);
-		// calls Method to get ArticlePriceDetails as a ChildNode
 		addArticlePriceDetails(product, article);
-		// appends the articles to the product catalog
 		catalog.appendChild(article);
 	}
 
+	/**
+	 * Creates and appends the element "SUPPLIER_AID" for the product catalog.
+	 * 
+	 * @param product
+	 *            a {@link BOProduct} product to add to the catalog
+	 * @param article
+	 *            the element where to append the supplierAID
+	 */
+
 	private void addSupplierAID(BOProduct product, Element article) {
-		// create an element SUPPLIER_AID
+
 		Element supplierAID = document.createElement("SUPPLIER_AID");
-		// read SupplierAID out of Database and append it to the TextNode of
-		// supplierAID
 		supplierAID.appendChild(document.createTextNode((product
 				.getOrderNumberSupplier())));
-		// appends supplierAID to articles
 		article.appendChild(supplierAID);
 	}
 
+	/**
+	 * Creates and appends an element "ARTICLE_DETAILS" and his childs
+	 * "DESCRIPTION_SHORT" and "DESCRIPTION_LONG" to the document.
+	 * 
+	 * @param product
+	 *            a {@link BOProduct} product to add to the catalog
+	 * 
+	 * @param article
+	 *            the article element where to append the details
+	 */
 	private void addArticleDetails(BOProduct product, Element article) {
-		// creates an Element ARTICLE_DETAILS
 		Element articleDetails = document.createElement("ARTICLE_DETAILS");
-		// creates an Element DESCRIPTION_SHORT
 		Element descrShort = document.createElement("DESCRIPTION_SHORT");
-		// read shortDescription out of Database and append it to the TextNode
-		// of descShort
 		descrShort.appendChild(document.createTextNode(product
 				.getShortDescription()));
-		// appends shortDescription to articlesDetails
 		articleDetails.appendChild(descrShort);
-		// read longDescription out of Database and append it to the TextNode
-		// of descLong
 		Element descrLong = document.createElement("DESCRIPTION_LONG");
 		descrLong.appendChild(document.createTextNode(product
 				.getLongDescription()));
-		// appends longDescription to articlesDetails
 		articleDetails.appendChild(descrLong);
-		// appends articleDetails to articles
 		article.appendChild(articleDetails);
 	}
+
+	/**
+	 * Creates and appends a new element "HEADER" to the document. Also calls
+	 * methds to append a product catalog and a supplier.
+	 * 
+	 * @param root
+	 *            the element in the document were to append the header
+	 */
 
 	void addHeader(Element root) {
 		// Creates a new element "HEADER"
@@ -87,9 +123,16 @@ public class DomProcessor {
 		root.appendChild(header);
 	}
 
+	/**
+	 * Creates and appends an element "CATALOG" and his childs "LANGUAGE",
+	 * "CATALOG_ID", "CATALOG_VERSION" and "CATALOG_NAME".
+	 * 
+	 * @param header
+	 *            the header part of the document were to append the catalog
+	 *            details
+	 * 
+	 */
 	private void addCatalog(Element header) {
-		// Creates and appends an element "CATALOG" and his childs "LANGUAGE",
-		// "CATALOG_ID", "CATALOG_VERSION" and "CATALOG_NAME"
 
 		Element catalog = document.createElement("CATALOG");
 		Element language = document.createElement("LANGUAGE");
@@ -111,11 +154,14 @@ public class DomProcessor {
 		header.appendChild(catalog);
 	}
 
+	/**
+	 * Creates and appends an element "ARTICLE_ORDER_DETAILS" and his childs
+	 * "ORDER_UNIT", "CONTENT_UNIT" and "NO_CU_PER_OU" to the document.
+	 * 
+	 * @param article
+	 *            the article element where to append the details
+	 */
 	private void addArticleOrderDetails(Element article) {
-		/*
-		 * Creates and appends an element "ARTICLE_ORDER_DETAILS" and his childs
-		 * "ORDER_UNIT", "CONTENT_UNIT" and "NO_CU_PER_OU" to the document.
-		 */
 
 		Element orderDetails = document.createElement("ARTICLE_ORDER_DETAILS");
 
@@ -134,20 +180,26 @@ public class DomProcessor {
 		article.appendChild(orderDetails);
 	}
 
+	/**
+	 * Creates and appends an element "ARTICLE_PRICE_DETAILS" and for each price
+	 * a child "ARTICLE_PRICE" and for each article price a child
+	 * "PRICE_AMOUNT", "PRICE_CURRENCY", "TAX" and "TERRITORY" in the document.
+	 * 
+	 * @param product
+	 *            a {@link BOProduct} product to add to the catalog
+	 * 
+	 * @param article
+	 *            the article element where to append the details
+	 */
 	private void addArticlePriceDetails(BOProduct product, Element article) {
-		/*
-		 * Creates and appends an element "ARTICLE_PRICE_DETAILS" and for each
-		 * price a child "ARTICLE_PRICE" and for each article price a child
-		 * "PRICE_AMOUNT", "PRICE_CURRENCY", "TAX" and "TERRITORY" in the
-		 * document.
-		 */
+
 		Element priceDetails = document.createElement("ARTICLE_PRICE_DETAILS");
 
 		List<BOSalesPrice> salesPrices = product.getSalesPrices();
 		for (BOSalesPrice salesPrice : salesPrices) {
 			Element price = document.createElement("ARTICLE_PRICE");
 			price.setAttribute("price_type", salesPrice.getPricetype());
-			// TODO price gros erscheint nicht in xml
+
 			Element amount = document.createElement("PRICE_AMOUNT");
 			amount.appendChild(document.createTextNode(salesPrice.getAmount()
 					.toString()));
@@ -162,7 +214,7 @@ public class DomProcessor {
 			tax.appendChild(document.createTextNode(salesPrice.getTaxrate()
 					.toString()));
 			price.appendChild(tax);
-			// TODO in XML nur ein Territory
+
 			Element territory = document.createElement("TERRITORY");
 			territory.appendChild(document.createTextNode(salesPrice
 					.getCountry().getIsocode()));
@@ -173,11 +225,17 @@ public class DomProcessor {
 		article.appendChild(priceDetails);
 	}
 
+	/**
+	 * Creates and appends an element "SUPPLIER" and his child "SUPPLIER_NAME".
+	 * In this method the supplier name is set.
+	 * 
+	 * @param header
+	 *            the header part of the document were to append the catalog
+	 *            details
+	 */
+
 	private void addSupplier(Element header) {
-		/*
-		 * Creates and appends an element "SUPPLIER" and his child
-		 * "SUPPLIER_NAME". In this method the supplier name is set.
-		 */
+
 		Element supplier = document.createElement("SUPPLIER");
 		Element supplierName = document.createElement("SUPPLIER_NAME");
 		supplierName.appendChild(document.createTextNode("Firmenname"));

@@ -82,9 +82,10 @@ public class ExportAction implements IAction {
 				return "welcome.jsp";
 			}
 
-		} else
+		} else {
 			// redirect to the login page
 			return "login.jsp";
+		}
 	}
 
 	/**

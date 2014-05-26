@@ -33,18 +33,32 @@ import org.xml.sax.SAXException;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 
+/** Dom Interactor controlls writing to Database. */
 public final class DomInteractor {
 
+	/**
+	 * get XSD File
+	 * */
 	private static final File XSD_FILE = new File(
 			"C:\\TEMP\\bmecat_new_catalog_1_2_simple_without_NS.xsd");
 
 	org.w3c.dom.Document dom;
 
+	/**
+	 * prevents instantiation via reflection
+	 */
 	private DomInteractor() {
-		// prevents instantiation via reflection
 		throw new AssertionError("May not be called!");
 	}
 
+	/**
+	 * create a Document from File.
+	 * 
+	 * @param Inputstream
+	 *            has uploaded Document
+	 * @param errorList
+	 *            checking Methods for errors
+	 */
 	public static Document createDomFromXml(InputStream xmlDocument,
 			List<String> errorList) {
 		// Parsing of a XML-Document through Java
@@ -65,6 +79,9 @@ public final class DomInteractor {
 		return null;
 	}
 
+	/**
+	 * Configurate DocumentBuilderFactory.
+	 */
 	private static DocumentBuilderFactory setupDocumentBuilderFactory()
 			throws FactoryConfigurationError {
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -79,6 +96,13 @@ public final class DomInteractor {
 		return dbf;
 	}
 
+	/**
+	 * checks if File has valid and wellformed XML in it.
+	 * 
+	 * @param Document
+	 *            which we created from File
+	 * @param errorList
+	 */
 	public static void validateXml(Document document, List<String> errorList) {
 		// Create a SchemaFactory capable of understanding W3C schemas
 		SchemaFactory factory = SchemaFactory
@@ -97,6 +121,13 @@ public final class DomInteractor {
 		}
 	}
 
+	/**
+	 * checks if File has supplier of the File in Database.
+	 * 
+	 * @param Document
+	 *            which we created from File
+	 * @param errorList
+	 */
 	public static BOSupplier containsValideSupplier(Document dom,
 			List<String> errorList) {
 		BOSupplier supplier = new DomRequester(dom).getSupplierFromName();
@@ -108,6 +139,13 @@ public final class DomInteractor {
 		return supplier;
 	}
 
+	/**
+	 * calls all DomRequester to write Dom to Database
+	 * 
+	 * @param Document
+	 *            which we created from File
+	 * @param errorList
+	 */
 	public static void writeDomToDb(Document dom, List<String> errorList,
 			Map<String, AtomicInteger> updateFeedback) {
 		DomRequester domInterpreter = new DomRequester(dom, updateFeedback);
@@ -115,6 +153,13 @@ public final class DomInteractor {
 		domInterpreter.getAllProducts(supplier);
 	}
 
+	/**
+	 * calls DOMProcessor to create DOMDocument out of Database.
+	 * 
+	 * @param products
+	 *            List of {@BOProduct} BOProducts
+	 * @param errorList
+	 */
 	public static Document createDomFromData(List<BOProduct> products,
 			List<String> errorList) {
 
@@ -145,6 +190,16 @@ public final class DomInteractor {
 		return document;
 	}
 
+	/**
+	 * Transform File from Document via Transformer
+	 * 
+	 * @param Document
+	 *            which we created from File
+	 * @param fileExtension
+	 *            if we do transformation with xhtml or xml
+	 * @param errorlist
+	 * 
+	 */
 	public static File createFileFromDom(Document dom, String fileExtension,
 			List<String> errorList) {
 		TransformerFactory tranFactory = TransformerFactory.newInstance();
