@@ -1,5 +1,4 @@
 <%@ page session="true"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 <head>
@@ -25,6 +24,7 @@
 	<%@ include file="error.jsp"%>
 	<%@ include file="authentication.jsp"%>
 	<%@ include file="navigation.jspfragment"%>
+	<%@ include file="uploadsuccess.jsp" %>
 
 	<h1>Import</h1>
 	<div>

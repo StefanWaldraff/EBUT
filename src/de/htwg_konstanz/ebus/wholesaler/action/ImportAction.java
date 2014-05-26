@@ -61,12 +61,12 @@ import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
  */
 public class ImportAction implements IAction {
 
-	public static final String ADDED_SALES_PRICES = "addedSalesPrices";
-	public static final String ADDED_PURCHASE_PRICES = "addedPurchasePrices";
-	public static final String ADDED_PRODUCTS = "addedProducts";
-	public static final String DELETED_SALES_PRICES = "deletedSalesPrices";
-	public static final String DELETED_PURCASE_PRICES = "deletedPurcasePrices";
-	public static final String DELETED_PRODUCTS = "deletedProducts";
+	public static final String ADDED_SALES_PRICES = "added sales prices";
+	public static final String ADDED_PURCHASE_PRICES = "added purchase prices";
+	public static final String ADDED_PRODUCTS = "added products";
+	public static final String DELETED_SALES_PRICES = "deleted sales prices";
+	public static final String DELETED_PURCASE_PRICES = "deleted purcase prices";
+	public static final String DELETED_PRODUCTS = "deleted products";
 	private List<String> errorList = null;
 	private final Map<String, AtomicInteger> updateFeedback = new HashMap<>();
 
@@ -89,7 +89,7 @@ public class ImportAction implements IAction {
 	 */
 	public String execute(HttpServletRequest request,
 			HttpServletResponse response, ArrayList<String> errorList) {
-
+		request.getSession(true).setAttribute("updateFeedback", updateFeedback);
 		// Check that we have a file upload request
 		boolean isMultipart = ServletFileUpload.isMultipartContent(request);
 		if (isMultipart) {
@@ -120,7 +120,7 @@ public class ImportAction implements IAction {
 						InputStream iSt = item.getInputStream();
 						// Creates ImportDOM and with the xml Stream as a
 						// parameter
-						return handleImport(iSt);
+						handleImport(iSt);
 
 					}
 				}
@@ -129,6 +129,7 @@ public class ImportAction implements IAction {
 
 				errorList.add("File couldn't be uploaded");
 			}
+			return "import.jsp";
 
 		}
 
@@ -188,7 +189,7 @@ public class ImportAction implements IAction {
 		return errorList.isEmpty();
 	}
 
-	private String handleImport(InputStream xmlDocument) {
+	private void handleImport(InputStream xmlDocument) {
 		Document dom = DomInteractor.createDomFromXml(xmlDocument, errorList);
 		if (noError())
 			DomInteractor.validateXml(dom, errorList);
@@ -199,9 +200,6 @@ public class ImportAction implements IAction {
 			deleteAllSupplierProductsFromDb(supplier);
 		if (noError())
 			DomInteractor.writeDomToDb(dom, errorList, updateFeedback);
-		// TODO redirect to updatesuccess.jsp and pass updateFeedback map as
-		// parameters!?!
-		return noError() ? "import.jsp" : "welcome.jsp";
 	}
 
 	private void deleteAllSupplierProductsFromDb(BOSupplier supplier) {
