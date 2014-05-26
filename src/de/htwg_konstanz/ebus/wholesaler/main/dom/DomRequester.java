@@ -25,7 +25,7 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.OrderItemBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
-import de.htwg_konstanz.ebus.wholesaler.action.ImportAction;
+import de.htwg_konstanz.ebus.wholesaler.main.handler.ImportHandler;
 
 final class DomRequester {
 	private static final String SALE_FACTOR = "1.5";
@@ -78,7 +78,7 @@ final class DomRequester {
 			case "ARTICLE_ORDER_DETAILS":
 				getArticleOrderDetails(node);
 				// TODO Connection to Product??
-				updateFeedback.get(ImportAction.ADDED_PRODUCTS)
+				updateFeedback.get(ImportHandler.ADDED_PRODUCTS)
 						.incrementAndGet();
 				ProductBOA.getInstance().saveOrUpdate(product);
 				break;
@@ -147,10 +147,10 @@ final class DomRequester {
 					salesprice.setProduct(product);
 
 					// saving Purchase and Salesprice in Database
-					updateFeedback.get(ImportAction.ADDED_PURCHASE_PRICES)
+					updateFeedback.get(ImportHandler.ADDED_PURCHASE_PRICES)
 							.incrementAndGet();
 					PriceBOA.getInstance().saveOrUpdate(purchaseprice);
-					updateFeedback.get(ImportAction.ADDED_SALES_PRICES)
+					updateFeedback.get(ImportHandler.ADDED_SALES_PRICES)
 							.incrementAndGet();
 					PriceBOA.getInstance().saveOrUpdate(salesprice);
 				}
