@@ -14,6 +14,7 @@
 	<%@ include file="error.jsp"%>
 	<%@ include file="authentication.jsp"%>
 	<%@ include file="navigation.jspfragment"%>
+	<%@ include file="exportsuccess.jsp"%>
 
 	<h1>XML Export</h1>
 	<div>

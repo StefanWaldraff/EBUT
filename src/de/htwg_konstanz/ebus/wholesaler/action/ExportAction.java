@@ -21,15 +21,9 @@
 package de.htwg_konstanz.ebus.wholesaler.action;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -77,7 +71,8 @@ public class ExportAction implements IAction {
 		// get the login bean from the session
 		LoginBean loginBean = (LoginBean) request.getSession(true)
 				.getAttribute(Constants.PARAM_LOGIN_BEAN);
-
+		request.getSession(true).setAttribute("filesUploaded",
+				new ArrayList<String>());
 		// ensure that the user is logged in
 		if (loginBean != null && loginBean.isLoggedIn()) {
 			// ensure that the user is allowed to execute this action
@@ -89,11 +84,13 @@ public class ExportAction implements IAction {
 					Security.RESOURCE_ALL, Security.ACTION_READ)) {
 				this.errorList = errorList;
 				handleExport(request, response);
+				return "export.jsp";
 			} else {
 				// authorization failed -> show error message
 				errorList.add("You are not allowed to perform this action!");
+				return "welcome.jsp";
 			}
-			return errorList.isEmpty() ? "export.jsp" : "welcome.jsp";
+
 		} else
 			// redirect to the login page
 			return "login.jsp";
@@ -127,62 +124,31 @@ public class ExportAction implements IAction {
 		if (productList.isEmpty()) {
 			// no products remaining after filtering -> error
 			errorList.add("No matching products found for pattern: " + match);
-			return;
 		}
-		Document dom = DomInteractor.createDomFromData(productList, errorList);
-		DomInteractor.validateXml(dom, errorList);
+		Document dom = null;
+		if (errorList.isEmpty())
+			dom = DomInteractor.createDomFromData(productList, errorList);
+		if (errorList.isEmpty())
+			DomInteractor.validateXml(dom, errorList);
+		File file = null;
 		if (errorList.isEmpty()) {
 			switch (action) {
 			case Constants.ACTION_EXPORT_XML:
-				// TODO test it!!! Remove link
-				// http://www.journaldev.com/1964/servlet-upload-file-and-download-file-example
-				createAndProvideFile(request, response, dom, "xml");
-
+				file = DomInteractor.createFileFromDom(dom, "xml", errorList);
 				break;
 			case Constants.ACTION_EXPORT_XHTML:
-
 				// TODO transform XML DOM to XHTML DOM
 
-				createAndProvideFile(request, response, dom, "xhtml");
+				file = DomInteractor.createFileFromDom(dom, "xhtml", errorList);
 				break;
 			}
 		}
-	}
-
-	private void createAndProvideFile(HttpServletRequest request,
-			HttpServletResponse response, Document dom, String fileExtension) {
-		File targetFile = DomInteractor.createFileFromDom(dom, fileExtension,
-				errorList);
-		if (errorList.isEmpty())
-			sendFile(request, response, targetFile);
-	}
-
-	private void sendFile(HttpServletRequest request,
-			HttpServletResponse response, File targetFile) {
-		ServletContext ctx = request.getSession().getServletContext();
-
-		try (InputStream fis = new FileInputStream(targetFile);
-				ServletOutputStream os = response.getOutputStream();) {
-			String mimeType = ctx.getMimeType(targetFile.getAbsolutePath());
-			response.setContentType(mimeType != null ? mimeType
-					: "application/octet-stream");
-			response.setContentLength((int) targetFile.length());
-			response.setHeader("Content-Disposition", "attachment; filename=\""
-					+ targetFile.getName() + "\"");
-
-			byte[] bufferData = new byte[1024];
-			int read = 0;
-
-			while ((read = fis.read(bufferData)) != -1) {
-				os.write(bufferData, 0, read);
-			}
-			os.flush();
-
-			System.out.println("File downloaded at client successfully");
-		} catch (FileNotFoundException e) {
-			errorList.add("Could not find file.");
-		} catch (IOException e) {
-			errorList.add("Could not send file.");
+		if (errorList.isEmpty()) {
+			@SuppressWarnings("unchecked")
+			ArrayList<String> urls = (ArrayList<String>) request.getSession(
+					true).getAttribute("filesUploaded");
+			String filePath = file.getAbsolutePath();
+			urls.add(filePath);
 		}
 	}
 
