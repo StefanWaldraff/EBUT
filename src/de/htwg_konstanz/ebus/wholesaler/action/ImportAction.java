@@ -50,7 +50,7 @@ import de.htwg_konstanz.ebus.wholesaler.demo.ControllerServlet;
 import de.htwg_konstanz.ebus.wholesaler.demo.IAction;
 import de.htwg_konstanz.ebus.wholesaler.demo.LoginBean;
 import de.htwg_konstanz.ebus.wholesaler.demo.util.Constants;
-import de.htwg_konstanz.ebus.wholesaler.main.DomInteractor;
+import de.htwg_konstanz.ebus.wholesaler.main.dom.DomInteractor;
 
 /**
  * The LoginAction processes an authentication request.

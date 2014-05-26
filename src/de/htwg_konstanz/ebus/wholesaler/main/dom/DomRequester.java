@@ -1,4 +1,4 @@
-package de.htwg_konstanz.ebus.wholesaler.main;
+package de.htwg_konstanz.ebus.wholesaler.main.dom;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
