@@ -4,7 +4,7 @@
 <%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <br>
-<c:if test="${fn:length${sessionScope.updateFeedback}} > 1 ">
+<c:if test="${!empty sessionScope.updateFeedback}">
 	<b>Successfully imported file.</b>
 	<br />
 	<c:forEach var="entry" items="${sessionScope.updateFeedback}">
