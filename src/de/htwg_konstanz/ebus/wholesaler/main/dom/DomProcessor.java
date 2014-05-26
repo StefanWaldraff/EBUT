@@ -117,7 +117,6 @@ public class DomProcessor {
 		 * "ORDER_UNIT", "CONTENT_UNIT" and "NO_CU_PER_OU" to the document.
 		 */
 
-		// TODO nach Steffen Hardcodiert --> nochmal rausfinden
 		Element orderDetails = document.createElement("ARTICLE_ORDER_DETAILS");
 
 		Element orderUnit = document.createElement("ORDER_UNIT");
@@ -148,7 +147,7 @@ public class DomProcessor {
 		for (BOSalesPrice salesPrice : salesPrices) {
 			Element price = document.createElement("ARTICLE_PRICE");
 			price.setAttribute("price_type", salesPrice.getPricetype());
-
+			// TODO price gros erscheint nicht in xml
 			Element amount = document.createElement("PRICE_AMOUNT");
 			amount.appendChild(document.createTextNode(salesPrice.getAmount()
 					.toString()));
@@ -163,7 +162,7 @@ public class DomProcessor {
 			tax.appendChild(document.createTextNode(salesPrice.getTaxrate()
 					.toString()));
 			price.appendChild(tax);
-
+			// TODO in XML nur ein Territory
 			Element territory = document.createElement("TERRITORY");
 			territory.appendChild(document.createTextNode(salesPrice
 					.getCountry().getIsocode()));
