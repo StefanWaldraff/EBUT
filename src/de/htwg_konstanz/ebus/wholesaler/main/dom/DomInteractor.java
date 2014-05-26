@@ -130,8 +130,8 @@ public final class DomInteractor {
 			root.setAttribute("version", "1.2");
 			root.setAttribute("xmlns:xsi",
 					"http://www.w3.org/2001/XMLSchema-instance");
-			domProcessor.appendHeader(root);
-			domProcessor.appendProductCatalog(root, products);
+			domProcessor.addHeader(root);
+			domProcessor.addProductCatalog(root, products);
 
 			document.appendChild(root);
 		} catch (ParserConfigurationException e) {

@@ -18,34 +18,34 @@ public class DomProcessor {
 
 	}
 
-	void appendProductCatalog(Element root, List<BOProduct> productList) {
+	void addProductCatalog(Element root, List<BOProduct> productList) {
 		// creates a new element "T_NEW_CATALOG"
 		Element catalog = document.createElement("T_NEW_CATALOG");
 
 		for (BOProduct product : productList) {
 			// calls appendArticle Method
-			appendArticle(catalog, product);
+			addArticle(catalog, product);
 		}
 		// appends the product catalog to the document
 		root.appendChild(catalog);
 	}
 
-	private void appendArticle(Element catalog, BOProduct product) {
+	private void addArticle(Element catalog, BOProduct product) {
 		// Creates an element "ARTICLE" for the product catalog
 		Element article = document.createElement("ARTICLE");
 		// calls Method to get SupplierAID as a ChildNode
-		appendSupplierAID(product, article);
+		addSupplierAID(product, article);
 		// calls Method to get ArticleDetails as a ChildNode
-		appendArticleDetails(product, article);
+		addArticleDetails(product, article);
 		// calls Method to get ArticleOrderDetails as a ChildNode
-		appendArticleOrderDetails(article);
+		addArticleOrderDetails(article);
 		// calls Method to get ArticlePriceDetails as a ChildNode
-		appendArticlePriceDetails(product, article);
+		addArticlePriceDetails(product, article);
 		// appends the articles to the product catalog
 		catalog.appendChild(article);
 	}
 
-	private void appendSupplierAID(BOProduct product, Element article) {
+	private void addSupplierAID(BOProduct product, Element article) {
 		// create an element SUPPLIER_AID
 		Element supplierAID = document.createElement("SUPPLIER_AID");
 		// read SupplierAID out of Database and append it to the TextNode of
@@ -56,38 +56,38 @@ public class DomProcessor {
 		article.appendChild(supplierAID);
 	}
 
-	private void appendArticleDetails(BOProduct product, Element article) {
+	private void addArticleDetails(BOProduct product, Element article) {
 		// creates an Element ARTICLE_DETAILS
 		Element articleDetails = document.createElement("ARTICLE_DETAILS");
 		// creates an Element DESCRIPTION_SHORT
-		Element descShort = document.createElement("DESCRIPTION_SHORT");
+		Element descrShort = document.createElement("DESCRIPTION_SHORT");
 		// read shortDescription out of Database and append it to the TextNode
 		// of descShort
-		descShort.appendChild(document.createTextNode(product
+		descrShort.appendChild(document.createTextNode(product
 				.getShortDescription()));
 		// appends shortDescription to articlesDetails
-		articleDetails.appendChild(descShort);
+		articleDetails.appendChild(descrShort);
 		// read longDescription out of Database and append it to the TextNode
 		// of descLong
-		Element descLong = document.createElement("DESCRIPTION_LONG");
-		descLong.appendChild(document.createTextNode(product
+		Element descrLong = document.createElement("DESCRIPTION_LONG");
+		descrLong.appendChild(document.createTextNode(product
 				.getLongDescription()));
 		// appends longDescription to articlesDetails
-		articleDetails.appendChild(descLong);
+		articleDetails.appendChild(descrLong);
 		// appends articleDetails to articles
 		article.appendChild(articleDetails);
 	}
 
-	void appendHeader(Element root) {
+	void addHeader(Element root) {
 		// Creates a new element "HEADER"
 		Element header = document.createElement("HEADER");
-		appendCatalog(header);
-		appendSupplier(header);
+		addCatalog(header);
+		addSupplier(header);
 		// appends header to the document
 		root.appendChild(header);
 	}
 
-	private void appendCatalog(Element header) {
+	private void addCatalog(Element header) {
 		// Creates and appends an element "CATALOG" and his childs "LANGUAGE",
 		// "CATALOG_ID", "CATALOG_VERSION" and "CATALOG_NAME"
 
@@ -111,7 +111,7 @@ public class DomProcessor {
 		header.appendChild(catalog);
 	}
 
-	private void appendArticleOrderDetails(Element article) {
+	private void addArticleOrderDetails(Element article) {
 		/*
 		 * Creates and appends an element "ARTICLE_ORDER_DETAILS" and his childs
 		 * "ORDER_UNIT", "CONTENT_UNIT" and "NO_CU_PER_OU" to the document.
@@ -135,7 +135,7 @@ public class DomProcessor {
 		article.appendChild(orderDetails);
 	}
 
-	private void appendArticlePriceDetails(BOProduct product, Element article) {
+	private void addArticlePriceDetails(BOProduct product, Element article) {
 		/*
 		 * Creates and appends an element "ARTICLE_PRICE_DETAILS" and for each
 		 * price a child "ARTICLE_PRICE" and for each article price a child
@@ -174,7 +174,7 @@ public class DomProcessor {
 		article.appendChild(priceDetails);
 	}
 
-	private void appendSupplier(Element header) {
+	private void addSupplier(Element header) {
 		/*
 		 * Creates and appends an element "SUPPLIER" and his child
 		 * "SUPPLIER_NAME". In this method the supplier name is set.
