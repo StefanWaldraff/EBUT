@@ -1,7 +1,6 @@
 package de.htwg_konstanz.ebus.wholesaler.main.handler;
 
 import java.io.File;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,10 +46,7 @@ public class ExportHandler {
 				file = DomInteractor.createFileFromDom(dom, "xml", errorList);
 				break;
 			case Constants.ACTION_EXPORT_XHTML:
-				// TODO transform XML DOM to XHTML DOM
-				InputStream iST = null;
 				// TODO InputStream aus File C:\\TEMP\\XMLtoXHMTLSchema.xslt
-				dom = DomInteractor.createDomFromXml(iST, errorList);
 
 				file = DomInteractor.createFileFromDom(dom, "xhtml", errorList);
 				break;

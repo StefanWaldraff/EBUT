@@ -1,7 +1,6 @@
 package de.htwg_konstanz.ebus.wholesaler.main.dom;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,20 +8,18 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCountry;
-import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOCurrency;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOPurchasePrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
-import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.CountryBOA;
-import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.CurrencyBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
+import de.htwg_konstanz.ebus.framework.wholesaler.vo.Country;
 import de.htwg_konstanz.ebus.wholesaler.main.handler.ImportHandler;
 
 final class DomRequester {
@@ -49,127 +46,104 @@ final class DomRequester {
 
 	List<BOProduct> getAllProducts(BOSupplier supplier) {
 		ArrayList<BOProduct> products = new ArrayList<BOProduct>();
-
-		NodeList articles = dom.getElementsByTagName("ARTICLE");
+		Element root = dom.getDocumentElement();
+		NodeList articles = root.getElementsByTagName("ARTICLE");
 
 		for (int i = 0; i <= articles.getLength(); i++) {
-			NodeList articleData = articles.item(i).getChildNodes();
+			// NodeList articleData = articles.item(i).getChildNodes();
 			BOProduct product = new BOProduct();
+
+			Element article = (Element) articles.item(i);
+
+			NodeList shortDescrList = article
+					.getElementsByTagName("DESCRIPTION_SHORT");
+			product.setShortDescription(shortDescrList.item(0).getFirstChild()
+					.getNodeValue());
+			if (article.getElementsByTagName("DESCRIPTION_LONG").getLength() > 0) {
+				NodeList longDescrList = article
+						.getElementsByTagName("DESCRIPTION_LONG");
+				product.setLongDescription(longDescrList.item(0)
+						.getFirstChild().getNodeValue());
+			}
+			if (article.getElementsByTagName("MANUFACTURER_NAME").getLength() > 0) {
+				NodeList mname = article
+						.getElementsByTagName("MANUFACTURER_NAME");
+				product.setManufacturer(mname.item(0).getFirstChild()
+						.getNodeValue());
+			}
+			// TODO brauchen wir es so oder haben wir es anders ?
+			NodeList sAIDList = article.getElementsByTagName("SUPPLIER_AID");
+			product.setOrderNumberCustomer(sAIDList.item(0).getFirstChild()
+					.getNodeValue());
 			product.setSupplier(supplier);
-			getArticleData(articleData, product);
+			product.setOrderNumberSupplier(sAIDList.item(0).getFirstChild()
+					.getNodeValue());
+
+			// TODO hier der Tutor die Produkte wenn vorhaden, sollen wir das
+			// bei uns auch ändern?
+			// ??
+
+			updateFeedback.get(ImportHandler.ADDED_PRODUCTS).incrementAndGet();
+			ProductBOA.getInstance().saveOrUpdate(product);
+
+			NodeList articlePrices = article
+					.getElementsByTagName("ARTICLE_PRICE");
+			getArticlePriceDetails(product, articlePrices);
+
 			products.add(product);
+
 		}
 
 		return products;
 	}
 
-	private void getArticleData(NodeList articleData, BOProduct product) {
-		for (int j = 0; j < articleData.getLength(); j++) {
-			Node node = articleData.item(j);
-			switch (node.getNodeName()) {
-			case "SUPPLIER_AID":
-				product.setOrderNumberSupplier(node.getFirstChild()
-						.getNodeValue());
-				break;
-			case "ARTICLE_DETAILS":
-				getArticleDetails(product, node);
-				break;
-			case "ARTICLE_PRICE_DETAILS":
-				updateFeedback.get(ImportHandler.ADDED_PRODUCTS)
-						.incrementAndGet();
-				ProductBOA.getInstance().saveOrUpdate(product);
-
-				NodeList articlePriceDetails = node.getChildNodes();
-				getArticlePriceDetails(product, articlePriceDetails);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
 	private void getArticlePriceDetails(BOProduct product,
-			NodeList articlePriceDetails) {
-		for (int i = 0; i < articlePriceDetails.getLength(); i++) {
-			Node articlePrice = articlePriceDetails.item(i);
-			// get price_type attribute
-			String articlePriceType = articlePrice.getAttributes().item(0)
-					.getNodeValue();
-			NodeList articlePriceData = articlePrice.getChildNodes();
+			NodeList articlePrices) {
 
-			HashMap<String, String> values = new HashMap<>();
-			for (int k = 0; k < articlePriceData.getLength(); k++) {
-				Node dataNode = articlePriceData.item(k);
-				if (!dataNode.getNodeName().equals("TERRITORY"))
-					values.put(dataNode.getNodeName(), dataNode.getNodeValue());
-				else {
-					BOCurrency currency = CurrencyBOA.getInstance()
-							.findCurrency(values.get("PRICE_CURRENCY"));
-					if (currency == null) {
-						currency = new BOCurrency();
-						currency.setCode(values.get("PRICE_CURRENCY"));
-						CurrencyBOA.getInstance().saveOrUpdate(currency);
-					}
-					BOCountry country = CountryBOA.getInstance().findCountry(
-							values.get("TERRITORY"));
-					if (country == null) {
-						country = new BOCountry();
-						country.setCurrency(currency);
-						country.setIsocode(values.get("TERRITORY"));
-						CountryBOA.getInstance().saveOrUpdate(country);
-					}
-					// set Country, Taxrate and Pricetype for Purchaseprice
-					BOPurchasePrice purchaseprice = new BOPurchasePrice();
-					purchaseprice.setCountry(country);
-					purchaseprice.setTaxrate(new BigDecimal(values.get("TAX")));
-					purchaseprice.setPricetype(articlePriceType);
-					purchaseprice.setAmount(new BigDecimal(values
-							.get("PRICE_AMOUNT")));
-					purchaseprice.setProduct(product);
+		BOSalesPrice salesprice = new BOSalesPrice();
+		BOPurchasePrice purchaseprice = new BOPurchasePrice();
 
-					// set Country, Taxrate and Pricetype for SalesPrice
-					BOSalesPrice salesprice = new BOSalesPrice();
-					salesprice.setCountry(country);
-					salesprice.setTaxrate(new BigDecimal(values.get("TAX")));
-					salesprice.setPricetype(articlePriceType);
-
-					// calculate Salesamount, which has an amount 1.5 times of
-					// Purchaseamount
-					BigDecimal purchaseamount = new BigDecimal(
-							(values.get("PRICE_AMOUNT")));
-					BigDecimal factor = new BigDecimal(SALE_FACTOR);
-					MathContext mc = new MathContext(4); // 4 precision
-					BigDecimal salesamount = purchaseamount
-							.multiply(factor, mc);
-					salesprice.setAmount(salesamount);
-					salesprice.setProduct(product);
-
-					// saving Purchase and Salesprice in Database
-					updateFeedback.get(ImportHandler.ADDED_PURCHASE_PRICES)
-							.incrementAndGet();
-					PriceBOA.getInstance().saveOrUpdate(purchaseprice);
-					updateFeedback.get(ImportHandler.ADDED_SALES_PRICES)
-							.incrementAndGet();
-					PriceBOA.getInstance().saveOrUpdate(salesprice);
-				}
+		// Get Price Amount and get if exist Pirce_Type and Tax otherwise set
+		// Default like the other parameters (Counter, LowerBoundScaledPrice)
+		// Ugly: SaveOrUpdate-Method overrides multiple prices for the same
+		// Product...
+		for (int i = 0; i < articlePrices.getLength(); i++) {
+			Element articlePrice = (Element) articlePrices.item(i);
+			NodeList articlePriceAmountList = articlePrice
+					.getElementsByTagName("PRICE_AMOUNT");
+			String priceType;
+			if (articlePrice.getAttribute("price_type") != null)
+				priceType = articlePrice.getAttribute("price_type");
+			else
+				priceType = "net_list";
+			BigDecimal pAmount = BigDecimal.valueOf(Double
+					.valueOf(articlePriceAmountList.item(0).getFirstChild()
+							.getNodeValue()));
+			BigDecimal tax;
+			if (articlePrice.getElementsByTagName("TAX").getLength() > 0) {
+				NodeList taxes = articlePrice.getElementsByTagName("TAX");
+				Double taxDouble = Double.valueOf(taxes.item(0).getFirstChild()
+						.getNodeValue());
+				tax = BigDecimal.valueOf(taxDouble);
+			} else {
+				tax = BigDecimal.valueOf(Double.valueOf(0.1900));
 			}
+			salesprice.setProduct(product);
+			// The Profit margin is twice as high
+			salesprice.setAmount(pAmount.multiply(new BigDecimal(SALE_FACTOR)));
+			salesprice.setPricetype(priceType);
+			salesprice.setTaxrate(tax);
+			salesprice.setCountry(new BOCountry(new Country("DE")));
+			salesprice.setLowerboundScaledprice(1);
+			purchaseprice.setProduct(product);
+			purchaseprice.setAmount(pAmount);
+			purchaseprice.setPricetype(priceType);
+			purchaseprice.setTaxrate(tax);
+			purchaseprice.setCountry(new BOCountry(new Country("DE")));
+			purchaseprice.setLowerboundScaledprice(1);
+			PriceBOA.getInstance().saveOrUpdateSalesPrice(salesprice);
+			PriceBOA.getInstance().saveOrUpdatePurchasePrice(purchaseprice);
 		}
 	}
 
-	private void getArticleDetails(BOProduct product, Node node) {
-		NodeList articleDetails = node.getChildNodes();
-		for (int k = 0; k < articleDetails.getLength(); k++) {
-			Node detailNode = articleDetails.item(k);
-			switch (detailNode.getNodeName()) {
-			case "DESCRIPTION_SHORT":
-				product.setShortDescription(detailNode.getFirstChild()
-						.getNodeValue());
-				break;
-			case "DESCRIPTION_LONG":
-				product.setLongDescription(detailNode.getFirstChild()
-						.getNodeValue());
-				break;
-			}
-		}
-	}
 }
