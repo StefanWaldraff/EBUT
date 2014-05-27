@@ -87,6 +87,7 @@ public class ImportAction implements IAction {
 					new ImportHandler(errorList, updateFeedback).process(
 							request, response);
 					if (!errorList.isEmpty()) {
+						// overwrite success message
 						request.getSession(true).setAttribute("updateFeedback",
 								new HashMap<String, AtomicInteger>());
 					}

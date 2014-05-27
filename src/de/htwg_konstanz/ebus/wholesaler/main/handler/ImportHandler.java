@@ -168,7 +168,6 @@ public class ImportHandler {
 				updateFeedback.get(DELETED_PRODUCTS).incrementAndGet();
 				boa.delete(boProduct);
 			}
-			// TODO
 			_BaseBOA.getInstance().commit();
 		}
 	}

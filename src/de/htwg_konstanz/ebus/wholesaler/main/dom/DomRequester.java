@@ -19,6 +19,7 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSupplier;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.PriceBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.ProductBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.boa.SupplierBOA;
+import de.htwg_konstanz.ebus.framework.wholesaler.api.boa._BaseBOA;
 import de.htwg_konstanz.ebus.framework.wholesaler.vo.Country;
 import de.htwg_konstanz.ebus.wholesaler.main.handler.ImportHandler;
 
@@ -50,7 +51,7 @@ final class DomRequester {
 	 */
 	BOSupplier getSupplierFromName() {
 		NodeList supplier = dom
-				.getElementsByTagName(XMLConstants.SUPPLIER_NAME);
+				.getElementsByTagName(XmlConstants.SUPPLIER_NAME);
 		String companyName = supplier.item(0).getFirstChild().getNodeValue();
 		List<BOSupplier> suppliers = SupplierBOA.getInstance()
 				.findByCompanyName(companyName);
@@ -64,7 +65,7 @@ final class DomRequester {
 	List<BOProduct> getAllProducts(BOSupplier supplier) {
 		ArrayList<BOProduct> products = new ArrayList<BOProduct>();
 		Element root = dom.getDocumentElement();
-		NodeList articles = root.getElementsByTagName(XMLConstants.ARTICLE);
+		NodeList articles = root.getElementsByTagName(XmlConstants.ARTICLE);
 
 		for (int i = 0; i < articles.getLength(); i++) {
 
@@ -73,39 +74,66 @@ final class DomRequester {
 			Element article = (Element) articles.item(i);
 
 			NodeList shortDescrList = article
-					.getElementsByTagName(XMLConstants.DESCRIPTION_SHORT);
+					.getElementsByTagName(XmlConstants.DESCRIPTION_SHORT);
 			product.setShortDescription(shortDescrList.item(0).getFirstChild()
 					.getNodeValue());
-			if (article.getElementsByTagName(XMLConstants.DESCRIPTION_LONG)
+			if (article.getElementsByTagName(XmlConstants.DESCRIPTION_LONG)
 					.getLength() > 0) {
 				NodeList longDescrList = article
-						.getElementsByTagName(XMLConstants.DESCRIPTION_LONG);
+						.getElementsByTagName(XmlConstants.DESCRIPTION_LONG);
 				product.setLongDescription(longDescrList.item(0)
 						.getFirstChild().getNodeValue());
 			}
-			if (article.getElementsByTagName(XMLConstants.MANUFACTURER_NAME)
+			if (article.getElementsByTagName(XmlConstants.MANUFACTURER_NAME)
 					.getLength() > 0) {
 				NodeList mname = article
-						.getElementsByTagName(XMLConstants.MANUFACTURER_NAME);
+						.getElementsByTagName(XmlConstants.MANUFACTURER_NAME);
 				product.setManufacturer(mname.item(0).getFirstChild()
 						.getNodeValue());
 			}
 
 			NodeList sAIDList = article
-					.getElementsByTagName(XMLConstants.SUPPLIER_AID);
+					.getElementsByTagName(XmlConstants.SUPPLIER_AID);
 			product.setOrderNumberCustomer(sAIDList.item(0).getFirstChild()
 					.getNodeValue());
 			product.setSupplier(supplier);
 			product.setOrderNumberSupplier(sAIDList.item(0).getFirstChild()
 					.getNodeValue());
 
+			// check for conflicts when reimporting
+			BOProduct productInDb = ProductBOA
+					.getInstance()
+					.findByOrderNumberCustomer(product.getOrderNumberCustomer());
+			if (productInDb != null) {
+				// already exists in db
+				for (BOSalesPrice price : productInDb.getSalesPrices()) {
+					// remove all sales prices for product
+					updateFeedback.get(ImportHandler.DELETED_SALES_PRICES)
+							.incrementAndGet();
+					PriceBOA.getInstance().delete(price);
+				}
+				for (BOPurchasePrice price : productInDb.getPurchasePrices()) {
+					// remove all purchase prices for product
+					updateFeedback.get(ImportHandler.DELETED_PURCASE_PRICES)
+							.incrementAndGet();
+					PriceBOA.getInstance().delete(price);
+				}
+				updateFeedback.get(ImportHandler.DELETED_PRODUCTS)
+						.incrementAndGet();
+				ProductBOA.getInstance().delete(productInDb);
+				// store changes in db
+				_BaseBOA.getInstance().commit();
+			}
+
 			updateFeedback.get(ImportHandler.ADDED_PRODUCTS).incrementAndGet();
 			ProductBOA.getInstance().saveOrUpdate(product);
 
 			NodeList articlePrices = article
-					.getElementsByTagName(XMLConstants.ARTICLE_PRICE);
+					.getElementsByTagName(XmlConstants.ARTICLE_PRICE);
 			getArticlePriceDetails(product, articlePrices);
 
+			// store changes in db
+			_BaseBOA.getInstance().commit();
 			products.add(product);
 
 		}
@@ -129,21 +157,21 @@ final class DomRequester {
 		for (int i = 0; i < articlePrices.getLength(); i++) {
 			Element articlePrice = (Element) articlePrices.item(i);
 			NodeList articlePriceAmountList = articlePrice
-					.getElementsByTagName(XMLConstants.PRICE_AMOUNT);
+					.getElementsByTagName(XmlConstants.PRICE_AMOUNT);
 			String priceType;
-			if (articlePrice.getAttribute(XMLConstants.PRICE_TYPE) != null) {
-				priceType = articlePrice.getAttribute(XMLConstants.PRICE_TYPE);
+			if (articlePrice.getAttribute(XmlConstants.PRICE_TYPE) != null) {
+				priceType = articlePrice.getAttribute(XmlConstants.PRICE_TYPE);
 			} else {
-				priceType = XMLConstants.NET_LIST;
+				priceType = XmlConstants.NET_LIST;
 			}
 
 			BigDecimal pAmount = BigDecimal.valueOf(Double
 					.valueOf(articlePriceAmountList.item(0).getFirstChild()
 							.getNodeValue()));
 			BigDecimal tax;
-			if (articlePrice.getElementsByTagName(XMLConstants.TAX).getLength() > 0) {
+			if (articlePrice.getElementsByTagName(XmlConstants.TAX).getLength() > 0) {
 				NodeList taxes = articlePrice
-						.getElementsByTagName(XMLConstants.TAX);
+						.getElementsByTagName(XmlConstants.TAX);
 				Double taxDouble = Double.valueOf(taxes.item(0).getFirstChild()
 						.getNodeValue());
 				tax = BigDecimal.valueOf(taxDouble);
@@ -153,20 +181,26 @@ final class DomRequester {
 			salesprice.setProduct(product);
 			// sale products 1.5 as high as bought
 			salesprice.setAmount(pAmount.multiply(new BigDecimal(
-					XMLConstants.SALE_FACTOR)));
+					XmlConstants.SALE_FACTOR)));
 			salesprice.setPricetype(priceType);
 			salesprice.setTaxrate(tax);
-			salesprice.setCountry(new BOCountry(new Country(XMLConstants.DE)));
+			salesprice.setCountry(new BOCountry(new Country(XmlConstants.DE)));
 			salesprice.setLowerboundScaledprice(1);
 			purchaseprice.setProduct(product);
 			purchaseprice.setAmount(pAmount);
 			purchaseprice.setPricetype(priceType);
 			purchaseprice.setTaxrate(tax);
 			purchaseprice
-					.setCountry(new BOCountry(new Country(XMLConstants.DE)));
+					.setCountry(new BOCountry(new Country(XmlConstants.DE)));
 			purchaseprice.setLowerboundScaledprice(1);
-			PriceBOA.getInstance().saveOrUpdateSalesPrice(salesprice);
+
+			// store sales price
 			updateFeedback.get(ImportHandler.ADDED_SALES_PRICES)
+					.incrementAndGet();
+			PriceBOA.getInstance().saveOrUpdateSalesPrice(salesprice);
+
+			// store purchase price
+			updateFeedback.get(ImportHandler.ADDED_PURCHASE_PRICES)
 					.incrementAndGet();
 			PriceBOA.getInstance().saveOrUpdatePurchasePrice(purchaseprice);
 		}
