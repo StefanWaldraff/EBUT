@@ -1,6 +1,8 @@
 package de.htwg_konstanz.ebus.wholesaler.main.dom;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -20,8 +22,10 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
@@ -207,8 +211,7 @@ public final class DomInteractor {
 		File file = null;
 
 		// create a unique filename
-		String fileName = (new BigInteger(130, new SecureRandom()))
-				.toString(32) + "." + fileExtension;
+		String fileName = generateUniqueFileName(fileExtension);
 
 		try {
 			aTransformer = tranFactory.newTransformer();
@@ -223,6 +226,42 @@ public final class DomInteractor {
 		}
 
 		return file;
+	}
+
+	private static String generateUniqueFileName(String fileExtension) {
+		String fileName = (new BigInteger(130, new SecureRandom()))
+				.toString(32) + "." + fileExtension;
+		return fileName;
+	}
+
+	public static File transformDomToXhtmlFile(Document dom,
+			List<String> errorList) {
+		// open xslt script
+		StreamSource xsltScript = new StreamSource(new File(
+				"C:\\TEMP\\Xhtml.xslt"));
+		String targetFileName = generateUniqueFileName("html");
+
+		try {
+
+			FileOutputStream target = new FileOutputStream(targetFileName);
+			Transformer transformer = TransformerFactory.newInstance()
+					.newTransformer(xsltScript);
+			// transforms the dom to xhtml file
+			transformer.transform(new DOMSource(dom), new StreamResult(target));
+
+			target.flush();
+			target.close();
+		} catch (TransformerConfigurationException
+				| TransformerFactoryConfigurationError e) {
+			errorList.add("Could not open xslt script.");
+		} catch (TransformerException e) {
+			errorList.add("Could not transform to xhtml file");
+		} catch (FileNotFoundException e) {
+			errorList.add("Could not open target file.");
+		} catch (IOException e) {
+			errorList.add("Could not close FileStream.");
+		}
+		return new File(targetFileName);
 	}
 
 }

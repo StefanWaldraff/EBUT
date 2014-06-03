@@ -9,7 +9,7 @@ import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOProduct;
 import de.htwg_konstanz.ebus.framework.wholesaler.api.bo.BOSalesPrice;
 
 /**
- * writes Datas to XML Document
+ * writes Data to XML Document
  * */
 public class DomProcessor {
 

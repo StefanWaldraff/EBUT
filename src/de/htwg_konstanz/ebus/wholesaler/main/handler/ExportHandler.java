@@ -60,9 +60,7 @@ public class ExportHandler {
 				file = DomInteractor.createFileFromDom(dom, "xml", errorList);
 				break;
 			case Constants.ACTION_EXPORT_XHTML:
-				// TODO InputStream aus File C:\\TEMP\\XMLtoXHMTLSchema.xslt
-
-				file = DomInteractor.createFileFromDom(dom, "xhtml", errorList);
+				file = DomInteractor.transformDomToXhtmlFile(dom, errorList);
 				break;
 			}
 		}
